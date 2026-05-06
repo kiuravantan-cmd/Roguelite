@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class PlayerController : MonoBehaviour
 {
@@ -13,9 +14,14 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private Rigidbody rigidbody;
 
     /// <summary>
-    /// 移動方向のベクトル
+    /// 自動生成されたクラス
     /// </summary>
-    private Vector3 moveDirection;
+    private DefaultInputActions inputActions;
+
+    /// <summary>
+    /// 入力方向
+    /// </summary>
+    private Vector2 moveInput;
 
     /// <summary>
     /// 外部（アニメーションやUIなど）に現在の速度を教えるために保持するVelocity
@@ -28,15 +34,24 @@ public class PlayerController : MonoBehaviour
         {
             Debug.LogError("PlayerにRigidbodyがアタッチされていません！");
         }
+
+        inputActions = new DefaultInputActions();
+        inputActions.Player.Fire.performed += OnFire;
+    }
+
+    private void OnEnable ()
+    {
+        inputActions.Enable();
+    }
+
+    private void OnDisable ()
+    {
+        inputActions.Disable();
     }
 
     private void Update()
     {
-        float x = Input.GetAxisRaw("Horizontal");
-        float z = Input.GetAxisRaw("Vertical");
-
-        // // 入力値から移動方向のベクトルを作成し、斜め移動が速くならないよう正規化(normalized)する
-        moveDirection = new Vector3(x, 0f, z).normalized;
+        moveInput = inputActions.Player.Move.ReadValue<Vector2>();
     }
 
     private void FixedUpdate ()
@@ -53,20 +68,26 @@ public class PlayerController : MonoBehaviour
         }
 
         // 入力がない場合はピタッと止める
-        if (moveDirection == Vector3.zero)
+        if (moveInput == Vector2.zero)
         {
             rigidbody.linearVelocity = new Vector3(0f, rigidbody.linearVelocity.y, 0f);
-            CurrentVelocity = Vector3.zero;
+            CurrentVelocity = Vector2.zero;
             return;
         }
 
         // 実際の速度を計算
-        Vector3 targetVelocity = moveDirection * MOVE_SPRRD;
+        Vector3 moveDirection = new Vector3(moveInput.x, rigidbody.linearVelocity.y, moveInput.y);
+        moveDirection.Normalize();
 
         // Y軸の速度（落下など）は現在の物理演算の値を維持し、XとZのみ上書きする
-        rigidbody.linearVelocity = new Vector3(targetVelocity.x, rigidbody.linearVelocity.y, targetVelocity.z);
+        rigidbody.linearVelocity = moveDirection * MOVE_SPRRD;
 
         // 外部（アニメーションやUIなど）に現在の速度を教えるためにプロパティを更新
         CurrentVelocity = rigidbody.linearVelocity;
+    }
+
+    private void OnFire (InputAction.CallbackContext context)
+    {
+        Debug.Log("Fireボタンが押されました。");
     }
 }
