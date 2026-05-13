@@ -1,93 +1,131 @@
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class PlayerController : MonoBehaviour
+namespace MyProject.Scripts.InGame.Camera
 {
-    /// <summary>
-    /// 移動速度
-    /// </summary>
-    private const float MOVE_SPEED = 5.0f;
 
-    /// <summary>
-    /// 物理演算コンポーネント
-    /// </summary>
-    [SerializeField] private Rigidbody rigidbody;
-
-    /// <summary>
-    /// 自動生成されたInputクラス
-    /// </summary>
-    private PlayerInputActions inputActions;
-
-    /// <summary>
-    /// 入力方向
-    /// </summary>
-    private Vector2 moveInput = Vector2.zero;
-
-    /// <summary>
-    /// 移動方向のベクトル
-    /// </summary>
-    private Vector3 moveDirection;
-
-    /// <summary>
-    /// 外部（アニメーションやUIなど）に現在の速度を教えるために保持するVelocity
-    /// </summary>
-    public Vector3 CurrentVelocity { get; private set; }
-
-    private void Awake() 
+    public class PlayerController : MonoBehaviour
     {
-        inputActions = new PlayerInputActions();
-        inputActions.Player.Fire.performed += OnFire;
-    }
+        /// <summary>
+        /// 移動速度
+        /// </summary>
+        private const float MOVE_SPEED = 5.0f;
 
-    private void OnEnable() 
-    {
-        inputActions.Enable();
-    }
+        /// <summary>
+        /// 回転速度
+        /// </summary>
+        private const float ROTATION_SPEED = 10.0f;
 
-    private void OnDisable()
-    {
-        inputActions.Disable();    
-    }
+        /// <summary>
+        /// 物理演算コンポーネント
+        /// </summary>
+        [SerializeField] private Rigidbody rigidbody;
 
-    private void Update()
-    {
-        moveInput = inputActions.Player.Move.ReadValue<Vector2>();
-    }
+        /// <summary>
+        /// 自動生成されたクラス
+        /// </summary>
+        private PlayerInputActions inputActions;
 
-    private void FixedUpdate ()
-    {
-        // 物理演算に関わる移動処理になるため、FixedUpdateで行う
-        Move();
-    }
+        /// <summary>
+        /// 入力方向
+        /// </summary>
+        private Vector2 moveInput;
 
-    private void Move()
-    {
-        if (rigidbody == null)
+        /// <summary>
+        /// カメラのトランスフォーム
+        /// </summary>
+        private Transform mainCameraTransform;
+
+        /// <summary>
+        /// 外部（アニメーションやUIなど）に現在の速度を教えるために保持するVelocity
+        /// </summary>
+        public Vector3 CurrentVelocity { get; private set; }
+
+        private void Awake ()
         {
-            return;
+            if (rigidbody == null)
+            {
+                Debug.LogError("PlayerにRigidbodyがアタッチされていません！");
+            }
+
+            if (UnityEngine.Camera.main != null)
+            {
+                mainCameraTransform = UnityEngine.Camera.main.transform;
+            }
+            else
+            {
+                Debug.LogError("Main Cameraが見つかりません！");
+            }
+
+            inputActions = new PlayerInputActions();
+            inputActions.Player.Fire.performed += OnFire;
         }
 
-        // 入力がない場合はピタッと止める
-        if (moveInput == Vector2.zero)
+        private void OnEnable ()
         {
-            rigidbody.linearVelocity = new Vector3(0f, rigidbody.linearVelocity.y, 0f);
-            CurrentVelocity = Vector3.zero;
-            return;
+            inputActions.Enable();
         }
 
-        // 実際の速度を計算
-        Vector3 targetVelocity = new Vector3(moveInput.x, rigidbody.linearVelocity.y, moveInput.y);
-        targetVelocity.Normalize();
+        private void OnDisable ()
+        {
+            inputActions.Disable();
+        }
 
-        rigidbody.linearVelocity = targetVelocity * MOVE_SPEED;
+        private void Update ()
+        {
+            moveInput = inputActions.Player.Move.ReadValue<Vector2>();
+        }
 
-        // 外部（アニメーションやUIなど）に現在の速度を教えるためにプロパティを更新
-        CurrentVelocity = rigidbody.linearVelocity;
-    }
+        private void FixedUpdate ()
+        {
+            // 物理演算に関わる移動処理になるため、FixedUpdateで行う
+            Move();
+        }
 
-    private void OnFire(InputAction.CallbackContext context)
-    {
-        Debug.Log("Fire");
+        private void Move ()
+        {
+            if (rigidbody == null)
+            {
+                return;
+            }
+
+            // 入力がない場合はピタッと止める
+            if (moveInput == Vector2.zero)
+            {
+                rigidbody.linearVelocity = new Vector3(0f, rigidbody.linearVelocity.y, 0f);
+                CurrentVelocity = Vector2.zero;
+                return;
+            }
+
+            // --- カメラ基準の移動方向計算 ---
+            Vector3 cameraForward = mainCameraTransform.forward;
+            Vector3 cameraRight = mainCameraTransform.right;
+
+            // Y軸（高さ）を0にして、水平なベクトルにする
+            cameraForward.y = 0f;
+            cameraRight.y = 0f;
+            cameraForward.Normalize();
+            cameraRight.Normalize();
+
+            // 入力値とカメラの向きを掛け合わせて、進むべき方向を決定
+            Vector3 moveDirection = (cameraForward * moveInput.y + cameraRight * moveInput.x);
+            moveDirection.Normalize();
+
+            // --- キャラクターの振り向き ---
+            // 進む方向を向く角度（Quaternion）を作り、Slerpで滑らかに回転させる
+            Quaternion targetRotation = Quaternion.LookRotation(moveDirection);
+            rigidbody.rotation = Quaternion.Slerp(rigidbody.rotation, targetRotation, ROTATION_SPEED * Time.fixedDeltaTime);
+
+            // Y軸の速度（落下など）は現在の物理演算の値を維持し、XとZのみ上書きする
+            rigidbody.linearVelocity = moveDirection * MOVE_SPEED;
+
+            // 外部（アニメーションやUIなど）に現在の速度を教えるためにプロパティを更新
+            CurrentVelocity = rigidbody.linearVelocity;
+        }
+
+        private void OnFire (InputAction.CallbackContext context)
+        {
+            Debug.Log("Fireボタンが押されました。");
+        }
     }
 }
