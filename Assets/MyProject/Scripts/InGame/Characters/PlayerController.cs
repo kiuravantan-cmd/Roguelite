@@ -28,9 +28,24 @@ namespace MyProject.Scripts.InGame.Camera
         private const float ATTACK_RANGE = 50f;
 
         /// <summary>
+        /// レーザーポインターの描画距離
+        /// </summary>
+        private const float LASER_MAX_DISTANCE = 50f;
+
+        /// <summary>
         /// 物理演算コンポーネント
         /// </summary>
         [SerializeField] private Rigidbody rigidbody;
+
+        /// <summary>
+        /// レーザーポインターの描画コンポーネント
+        /// </summary>
+        [SerializeField] private LineRenderer laserLineRenderer;
+
+        /// <summary>
+        /// 銃口の位置
+        /// </summary>
+        [SerializeField] private Transform weaponOrigin;
 
         /// <summary>
         /// 自動生成されたクラス
@@ -85,6 +100,8 @@ namespace MyProject.Scripts.InGame.Camera
         private void Update ()
         {
             moveInput = inputActions.Player.Move.ReadValue<Vector2>();
+
+            DrawLaserPointer();
         }
 
         private void FixedUpdate ()
@@ -152,6 +169,34 @@ namespace MyProject.Scripts.InGame.Camera
                 {
                     target.TakeDamage(ATTACK_DAMAGE);
                 }
+            }
+        }
+
+        /// <summary>
+        /// レーザーを描画
+        /// </summary>
+        private void DrawLaserPointer()
+        {
+            if (laserLineRenderer == null || weaponOrigin == null || mainCameraTransform == null)
+            {
+                return;
+            }
+
+            laserLineRenderer.SetPosition(0, weaponOrigin.position);
+
+            // カメラの中央から真っ直ぐ前へ光線を飛ばす
+            Ray ray = new Ray(mainCameraTransform.position, mainCameraTransform.forward);
+
+            // 光線が何かに当たったか判定
+            if (Physics.Raycast(ray, out RaycastHit hitInfo, LASER_MAX_DISTANCE))
+            {
+                // 当たった場所をレーザーの終点にする
+                laserLineRenderer.SetPosition(1, hitInfo.point);
+            }
+            else
+            {
+                // 何も当たらなかったら、最大距離の場所を終点にする
+                laserLineRenderer.SetPosition(1, ray.GetPoint(LASER_MAX_DISTANCE));
             }
         }
     }
