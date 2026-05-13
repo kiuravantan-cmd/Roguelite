@@ -1,3 +1,4 @@
+using MyProject.Scripts.InGame.Interface;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -15,6 +16,16 @@ namespace MyProject.Scripts.InGame.Camera
         /// 回転速度
         /// </summary>
         private const float ROTATION_SPEED = 10.0f;
+
+        /// <summary>
+        /// 相手に与えるダメージ量
+        /// </summary>
+        private const int ATTACK_DAMAGE = 20;
+
+        /// <summary>
+        /// 攻撃距離（射撃範囲）
+        /// </summary>
+        private const float ATTACK_RANGE = 50f;
 
         /// <summary>
         /// 物理演算コンポーネント
@@ -123,9 +134,25 @@ namespace MyProject.Scripts.InGame.Camera
             CurrentVelocity = rigidbody.linearVelocity;
         }
 
-        private void OnFire (InputAction.CallbackContext context)
+        private void OnFire(InputAction.CallbackContext context)
         {
-            Debug.Log("Fireボタンが押されました。");
+            // カメラの中央から真っ直ぐ前へ光線を飛ばす
+            Ray ray = new Ray(mainCameraTransform.position, mainCameraTransform.forward);
+
+            // 光線が何かに当たったか判定
+            if (Physics.Raycast(ray, out RaycastHit hitInfo, ATTACK_RANGE))
+            {
+                Debug.Log($"{hitInfo.collider.name} に命中！");
+
+                // 当たった相手が IDamageable (ダメージを受けられる性質) を持っているか確認
+                IDamageable target = hitInfo.collider.GetComponent<IDamageable>();
+
+                // ダメージを受けられる性質を持っていればダメージ処理を行う
+                if (target != null)
+                {
+                    target.TakeDamage(ATTACK_DAMAGE);
+                }
+            }
         }
     }
 }
