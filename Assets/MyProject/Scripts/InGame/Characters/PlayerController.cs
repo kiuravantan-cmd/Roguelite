@@ -1,6 +1,7 @@
 using MyProject.Scripts.InGame.Interface;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Cysharp.Threading.Tasks;
 
 namespace MyProject.Scripts.InGame.Camera
 {
@@ -33,6 +34,16 @@ namespace MyProject.Scripts.InGame.Camera
         private const float LASER_MAX_DISTANCE = 50f;
 
         /// <summary>
+        /// 最大弾数
+        /// </summary>
+        private const int MAX_AMMO = 10;
+
+        /// <summary>
+        /// リロード時間
+        /// </summary>
+        private const float RELOAD_TIME = 1.5f;
+
+        /// <summary>
         /// 物理演算コンポーネント
         /// </summary>
         [SerializeField] private Rigidbody rigidbody;
@@ -63,9 +74,19 @@ namespace MyProject.Scripts.InGame.Camera
         private Transform mainCameraTransform;
 
         /// <summary>
+        /// リロード中か
+        /// </summary>
+        private bool isReloading = false;
+
+        /// <summary>
         /// 外部（アニメーションやUIなど）に現在の速度を教えるために保持するVelocity
         /// </summary>
         public Vector3 CurrentVelocity { get; private set; }
+
+        /// <summary>
+        /// 現在の弾数
+        /// </summary>
+        public int CurrentAmmo { get; private set; }
 
         private void Awake ()
         {
@@ -85,6 +106,9 @@ namespace MyProject.Scripts.InGame.Camera
 
             inputActions = new PlayerInputActions();
             inputActions.Player.Fire.performed += OnFire;
+            inputActions.Player.Reload.performed += OnReload;
+
+            CurrentAmmo = MAX_AMMO;
         }
 
         private void OnEnable ()
@@ -153,6 +177,15 @@ namespace MyProject.Scripts.InGame.Camera
 
         private void OnFire(InputAction.CallbackContext context)
         {
+            if (isReloading || CurrentAmmo <= 0)
+            {
+                Debug.Log("弾切れ、またはリロード中です！");
+                return;
+            }
+
+            CurrentAmmo--;
+            Debug.Log($"発砲！残り弾数：{CurrentAmmo}");
+
             // カメラの中央から真っ直ぐ前へ光線を飛ばす
             Ray ray = new Ray(mainCameraTransform.position, mainCameraTransform.forward);
 
@@ -170,6 +203,35 @@ namespace MyProject.Scripts.InGame.Camera
                     target.TakeDamage(ATTACK_DAMAGE);
                 }
             }
+        }
+
+        /// <summary>
+        /// リロード
+        /// </summary>
+        private void OnReload(InputAction.CallbackContext context)
+        {
+            if (isReloading || CurrentAmmo == MAX_AMMO)
+            {
+                return;
+            }
+
+            ReloadAsync().Forget();
+        }
+
+        /// <summary>
+        /// リロードの実処理
+        /// </summary>
+        /// <returns></returns>
+        private async UniTask ReloadAsync()
+        {
+            isReloading = true;
+            Debug.Log("リロード開始");
+
+            await UniTask.Delay(System.TimeSpan.FromSeconds(RELOAD_TIME));
+
+            CurrentAmmo = MAX_AMMO;
+            isReloading = false;
+            Debug.Log("リロード完了");
         }
 
         /// <summary>
