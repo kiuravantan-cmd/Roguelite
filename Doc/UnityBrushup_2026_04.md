@@ -8,9 +8,13 @@
 ##  1. インターフェースの実装
 
 ### 1-1. インターフェースと敵の作成（新規）
+
+1. Scriptフォルダに `Core` という名前のフォルダを追加しましょう。
+2. 作成した `Core` に `Interface` という名前のフォルダを追加しましょう。
+3. `Interface` フォルダの中に `IDamageable.cs` という名前のスクリプトを作成します。
+
 **ファイル名: `IDamageable.cs`**
 ``` cs
-
 namespace Core.Interface
 {
     public interface IDamageable
@@ -23,12 +27,15 @@ namespace Core.Interface
 }
 ```
 
+1. ScriptフォルダにあるInGameフォルダに `Enemy` という名前のフォルダを追加しましょう。
+2. Cameraフォルダの中に `EnemyState.cs` という名前のスクリプトを作成します。
+   
 **ファイル名: `EnemyState.cs`**
 ``` cs
 using UnityEngine;
 using Core.Interface;
 
-namespace Roguelite.InGame.Enemy
+namespace TPSRoguelite.InGame.Enemy
 {
     public class EnemyState : MonoBehaviour, IDamageable
     {

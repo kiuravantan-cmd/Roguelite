@@ -17,12 +17,15 @@
 
 ### 1-2. カメラを制御する専用のスクリプトを作成する
 
+1. ScriptフォルダにあるInGameフォルダに `Camera` という名前のフォルダを追加しましょう。
+2. Cameraフォルダの中に `CameraController.cs` という名前のスクリプトを作成します。
+
 **ファイル名：`CameraController.cs`**
 ```csharp
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-namespace Roguelite.InGame.Camera
+namespace TPSRoguelite.InGame.Camera
 {
     public class CameraController : MonoBehaviour
     {
