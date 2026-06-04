@@ -59,7 +59,7 @@ Destroyは「その書類をぐしゃぐしゃに丸めて、机の端にゴミ�
 using UnityEngine;
 + using UnityEngine.Events; // UnityAction（連絡先）を使うために必要
 
-namespace InGame.Enemy
+namespace TPSRoguelite.InGame.Enemy
 {
     public class EnemyState : MonoBehaviour, IDamageable
     {
@@ -108,7 +108,7 @@ using UnityEngine.AI;
 using Cysharp.Threading.Tasks;
 + using System.Collections.Generic; // Queueを使うために必要
 
-namespace InGame.Spawner
+namespace TPSRoguelite.InGame.Spawner
 {
     public class EnemySpawner : MonoBehaviour
     {
