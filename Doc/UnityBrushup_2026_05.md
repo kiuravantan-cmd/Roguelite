@@ -44,7 +44,7 @@ Hierarchyでプレイヤーのオブジェクトを選択し、Inspectorの一�
 using UnityEngine;
 using UnityEngine.AI; // NavMeshAgentを使うために必要
 
-namespace InGame.Enemy
+namespace TPSRoguelite.InGame.Enemy
 {  
     public class EnemyController : MonoBehaviour
     {
@@ -102,7 +102,7 @@ using UnityEngine;
 using UnityEngine.AI; // NavMeshを使うために必要
 using Cysharp.Threading.Tasks; // UniTaskを使うために必要
 
-namespace InGame.Spawner
+namespace TPSRoguelite.InGame.Spawner
 {    
     public class EnemySpawner : MonoBehaviour
     {
