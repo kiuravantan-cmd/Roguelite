@@ -165,6 +165,20 @@ namespace TPSRoguelite.InGame.Player {
 
         private void OnFire(InputAction.CallbackContext context)
         {
+            if (isReloading)
+            {
+                return;
+            }
+
+            if (CurrentAmmo <= 0)
+            {
+                ReloadAsync().Forget();
+                return;
+            }
+
+            CurrentAmmo--;
+            Debug.Log($"発砲！残り弾数：{CurrentAmmo}");
+
             Ray ray = new Ray(mainCameraTransform.position, mainCameraTransform.forward);
 
             // 光線に何かが当たったか判定
@@ -190,7 +204,7 @@ namespace TPSRoguelite.InGame.Player {
             ReloadAsync().Forget();
         }
 
-        private async UniTask ReloadAsync()
+        private async UniTaskVoid ReloadAsync()
         {
             isReloading = true;
             Debug.Log("リロード中");
