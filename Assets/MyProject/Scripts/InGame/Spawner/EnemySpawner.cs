@@ -38,15 +38,19 @@ namespace TPSRoguelite.InGame.Spawner
         /// </summary>
         [SerializeField] private Transform[] spawnPoints;
 
-        private Queue<GameObject> enemyPool = new Queue<GameObject>();
+        private Queue<EnemyState> enemyPool = new Queue<EnemyState>();
 
         private void Awake ()
         {
             for (int i = 0; i < POOL_SIZE; i++)
             {
-                GameObject enemy = Instantiate(enemyPrefab, enemyParent);
-                enemy.SetActive(false);
-                enemyPool.Enqueue(enemy);
+                GameObject enemyObj = Instantiate(enemyPrefab, enemyParent);
+                enemyObj.SetActive(false);
+                EnemyState enemyState = enemyObj.GetComponent<EnemyState>();
+                if (enemyState != null)
+                {
+                    enemyPool.Enqueue(enemyState);
+                }
             }
         }
 
@@ -102,39 +106,35 @@ namespace TPSRoguelite.InGame.Spawner
                 return;
             }
 
-            GameObject spawnEnemy = null;
+            EnemyState enemyState = null;
             if (enemyPool.Count > 0)
             {
-                spawnEnemy = enemyPool.Dequeue();
+                enemyState = enemyPool.Dequeue();
             }
             else
             {
-                spawnEnemy = Instantiate(enemyPrefab);
+                GameObject enemyObj = Instantiate(enemyPrefab, enemyParent);
+                enemyState = enemyObj.GetComponent<EnemyState>();
+                if (enemyState == null)
+                {
+                    return;
+                }
+
                 Debug.LogWarning("プールに空きがなたったため、敵を生成(Instantiate)しました。POOL_SIZEを調整するか、生成数を制限してください。");
             }
 
-            EnemyState enemyState = spawnEnemy.GetComponent<EnemyState>();
-            if (enemyState != null)
-            {
-                enemyState.OnReturnToPoolAction -= ReturnToPool;
-                enemyState.OnReturnToPoolAction += ReturnToPool;
-            }
+            enemyState.OnReturnToPoolAction -= ReturnToPool;
+            enemyState.OnReturnToPoolAction += ReturnToPool;
+            enemyState.transform.position = safePosition;
+            enemyState.transform.rotation = spawnPoint.rotation;
 
-            spawnEnemy.transform.position = safePosition;
-            spawnEnemy.transform.rotation = spawnPoint.rotation;
-
-            spawnEnemy.SetActive(true);
+            enemyState.gameObject.SetActive(true);
         }
 
-        private void ReturnToPool (GameObject enemy)
+        private void ReturnToPool (EnemyState enemy)
         {
             enemyPool.Enqueue(enemy);
-
-            EnemyState enemyState = enemy.GetComponent<EnemyState>();
-            if (enemyState != null)
-            {
-                enemyState.OnReturnToPoolAction -= ReturnToPool;
-            }
+            enemy.OnReturnToPoolAction -= ReturnToPool;
         }
     }
 }

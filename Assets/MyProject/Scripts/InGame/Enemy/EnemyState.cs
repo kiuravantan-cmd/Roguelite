@@ -16,7 +16,7 @@ namespace TPSRoguelite.InGame.Enemy
         /// </summary>
         public int CurrentHP { get; private set; }
 
-        public event UnityAction<GameObject> OnReturnToPoolAction;
+        public event UnityAction<EnemyState> OnReturnToPoolAction;
 
         private void Awake() 
         {
@@ -49,7 +49,7 @@ namespace TPSRoguelite.InGame.Enemy
         private void Die() 
         {
             gameObject.SetActive(false);
-            OnReturnToPoolAction?.Invoke(gameObject);
+            OnReturnToPoolAction?.Invoke(this);
         }
     }
 }
