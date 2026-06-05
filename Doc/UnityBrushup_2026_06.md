@@ -93,7 +93,7 @@ namespace TPSRoguelite.InGame.Enemy
 +
 +           // 倒れたら、貰っていた連絡先に自分自身を渡して報告する
 +           // 「?.」は、もし連絡先が空っぽじゃなければ実行する、という安全な書き方です
-+           returnToPoolAction?.Invoke(gameObject);
++           OnReturnToPoolAction?.Invoke(gameObject);
         }   
     } 
 }
@@ -207,8 +207,8 @@ namespace TPSRoguelite.InGame.Spawner
 +           if (enemyState != null)
 +           {
 +               // 安全のため、一度解除してから登録し直すことで、二重登録のバグを防ぐ
-+               enemyState.OnReturnToPool -= ReturnToPool;
-+               enemyState.OnReturnToPool += ReturnToPool;
++               enemyState.OnReturnToPoolAction -= ReturnToPool;
++               enemyState.OnReturnToPoolAction += ReturnToPool;
 +           }
 +
 +           // 敵の配置と表示
@@ -219,10 +219,6 @@ namespace TPSRoguelite.InGame.Spawner
 +           spawnEnemy.transform.rotation = spawnPoint.rotation;
 +   
 +           spawnEnemy.SetActive(true);
-+       
-+           // 出撃した敵を、またプール（列）に戻すための準備
-+           // ※本来は敵が倒れた時に戻すべきですが、今回は簡単のため「表示された瞬間に列の最後尾にもう一度並ばせる」という裏技を使います
-+           enemyPool.Enqueue(spawnEnemy);
         }
 
 +       /// <summary>
