@@ -1,4 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
+using System.Collections.Generic;
+using TPSRoguelite.InGame.Enemy;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -17,14 +19,36 @@ namespace TPSRoguelite.InGame.Spawner
         private const float MAX_SPAWN_DISTANCE = 2.0f;
 
         /// <summary>
+        /// 最初に用意する敵の数
+        /// </summary>
+        private const int POOL_SIZE = 20;
+
+        /// <summary>
         /// 敵のプレハブ
         /// </summary>
         [SerializeField] private GameObject enemyPrefab;
 
         /// <summary>
+        /// 敵の親コンポーネント
+        /// </summary>
+        [SerializeField] private Transform enemyParent;
+
+        /// <summary>
         /// 出現ポイント
         /// </summary>
         [SerializeField] private Transform[] spawnPoints;
+
+        private Queue<GameObject> enemyPool = new Queue<GameObject>();
+
+        private void Awake ()
+        {
+            for (int i = 0; i < POOL_SIZE; i++)
+            {
+                GameObject enemy = Instantiate(enemyPrefab, enemyParent);
+                enemy.SetActive(false);
+                enemyPool.Enqueue(enemy);
+            }
+        }
 
         private void Start ()
         {
@@ -44,14 +68,14 @@ namespace TPSRoguelite.InGame.Spawner
             {
                 // 指定時間待機する
                 await UniTask.Delay(System.TimeSpan.FromSeconds(SPAWN_INTERVAL), cancellationToken: token);
-                SpawnEnemy();
+                SpawnEnemyFromPool();
             }
         }
 
         /// <summary>
         /// 敵の生成
         /// </summary>
-        private void SpawnEnemy ()
+        private void SpawnEnemyFromPool()
         {
             if (enemyPrefab == null || spawnPoints.Length == 0)
             {
@@ -78,9 +102,39 @@ namespace TPSRoguelite.InGame.Spawner
                 return;
             }
 
-            // 敵のクローンを生成する
-            GameObject enemy = Instantiate(enemyPrefab, safePosition, spawnPoint.rotation);
-            Debug.Log("敵を生成(Instantiate)しました！");
+            GameObject spawnEnemy = null;
+            if (enemyPool.Count > 0)
+            {
+                spawnEnemy = enemyPool.Dequeue();
+            }
+            else
+            {
+                spawnEnemy = Instantiate(enemyPrefab);
+                Debug.LogWarning("プールに空きがなたったため、敵を生成(Instantiate)しました。POOL_SIZEを調整するか、生成数を制限してください。");
+            }
+
+            EnemyState enemyState = spawnEnemy.GetComponent<EnemyState>();
+            if (enemyState != null)
+            {
+                enemyState.OnReturnToPoolAction -= ReturnToPool;
+                enemyState.OnReturnToPoolAction += ReturnToPool;
+            }
+
+            spawnEnemy.transform.position = safePosition;
+            spawnEnemy.transform.rotation = spawnPoint.rotation;
+
+            spawnEnemy.SetActive(true);
+        }
+
+        private void ReturnToPool (GameObject enemy)
+        {
+            enemyPool.Enqueue(enemy);
+
+            EnemyState enemyState = enemy.GetComponent<EnemyState>();
+            if (enemyState != null)
+            {
+                enemyState.OnReturnToPoolAction -= ReturnToPool;
+            }
         }
     }
 }
