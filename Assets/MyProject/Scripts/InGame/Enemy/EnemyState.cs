@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Events;
 using Core.Interface;
 
 namespace TPSRoguelite.InGame.Enemy 
@@ -15,7 +16,14 @@ namespace TPSRoguelite.InGame.Enemy
         /// </summary>
         public int CurrentHP { get; private set; }
 
+        public event UnityAction<EnemyState> OnReturnToPoolAction;
+
         private void Awake() 
+        {
+            CurrentHP = MAX_HP;
+        }
+
+        private void OnEnable()
         {
             CurrentHP = MAX_HP;
         }
@@ -40,7 +48,8 @@ namespace TPSRoguelite.InGame.Enemy
         private void Die() 
         {
             Debug.Log("“G‚ð“|‚µ‚Ü‚µ‚½");
-            Destroy(gameObject);
+            gameObject.SetActive(false);
+            OnReturnToPoolAction?.Invoke(this);
         }
     }
 }
