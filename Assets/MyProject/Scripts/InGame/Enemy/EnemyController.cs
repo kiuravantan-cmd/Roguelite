@@ -12,6 +12,8 @@ namespace TPSRoguelite.InGame.Enemy
         /// </summary>
         [SerializeField] private NavMeshAgent navMeshAgent = null;
 
+        [SerializeField] private EnemyState enemyState = null;
+
         /// <summary>
         /// 目的地となるPlayerのTransform
         /// </summary>
@@ -28,6 +30,11 @@ namespace TPSRoguelite.InGame.Enemy
             else
             {
                 Debug.LogError($"{PLAYER_TAG_NAME}というタグのついたオブジェクトが見つかりませんでした。");
+            }
+
+            if (enemyState != null && enemyState.EnemyDataAsset != null)
+            {
+                navMeshAgent.speed = enemyState.EnemyDataAsset.MoveSpeed;
             }
         }
 

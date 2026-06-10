@@ -129,6 +129,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 087c3a92705fcda49b605c786a5304c9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TPSRoguelite.InGame.Enemy.EnemyState
+  <EnemyDataAsset>k__BackingField: {fileID: 11400000, guid: de289ad0b605b0742a36b6cb54eda0f9, type: 2}
 --- !u!195 &4612001329808313727
 NavMeshAgent:
   m_ObjectHideFlags: 0
@@ -164,3 +165,4 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TPSRoguelite.InGame.Enemy.EnemyController
   navMeshAgent: {fileID: 4612001329808313727}
+  enemyState: {fileID: 4097391488850666698}
