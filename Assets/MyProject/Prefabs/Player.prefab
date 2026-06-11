@@ -159,6 +159,7 @@ MonoBehaviour:
   rigidbody: {fileID: 3154022591040907522}
   weponOrigin: {fileID: 3591139767689944414}
   laserLineRenderer: {fileID: 1659590819486568459}
+  currentWeapon: {fileID: 11400000, guid: a64f86006de86334996d5a0abc10ce65, type: 2}
 --- !u!1 &7843633271896678717
 GameObject:
   m_ObjectHideFlags: 0
