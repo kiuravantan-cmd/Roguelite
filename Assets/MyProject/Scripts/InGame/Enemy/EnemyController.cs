@@ -8,6 +8,11 @@ namespace TPSRoguelite.InGame.Enemy
         private const string PLAYER_TAG_NAME = "Player";
 
         /// <summary>
+        /// 敵の本体
+        /// </summary>
+        [SerializeField] private EnemyState enemyState = null;
+
+        /// <summary>
         /// NavMeshAgent
         /// </summary>
         [SerializeField] private NavMeshAgent navMeshAgent = null;
@@ -28,6 +33,11 @@ namespace TPSRoguelite.InGame.Enemy
             else
             {
                 Debug.LogError($"{PLAYER_TAG_NAME}というタグのついたオブジェクトが見つかりませんでした。");
+            }
+
+            if (navMeshAgent != null && enemyState != null && enemyState.EnemyDataAsset != null)
+            {
+                navMeshAgent.speed = enemyState.EnemyDataAsset.MoveSpeed;
             }
         }
 
