@@ -4,6 +4,8 @@ using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using Cysharp.Threading.Tasks;
 using System;
+using TPSRoguelite.InGame.Data;
+using System.Threading;
 
 namespace TPSRoguelite.InGame.Player {
 
@@ -24,24 +26,9 @@ namespace TPSRoguelite.InGame.Player {
         private const float LASER_MAX_DISTANCE = 50f;
 
         /// <summary>
-        /// 相手に与えるダメージ量
-        /// </summary>
-        private const int ATTACK_DAMAGE = 20;
-
-        /// <summary>
         /// 攻撃距離（射撃範囲）
         /// </summary>
         private const float ATTACK_RANGE = 50f;
-
-        /// <summary>
-        /// 最大弾数
-        /// </summary>
-        private const int MAX_AMMO = 30;
-
-        /// <summary>
-        /// リロード時間
-        /// </summary>
-        private const float RELOAD_TIME = 1.5f;
 
         /// <summary>
         /// 物理演算コンポーネント
@@ -57,6 +44,11 @@ namespace TPSRoguelite.InGame.Player {
         /// レーザーポインターの描画コンポーネント
         /// </summary>
         [SerializeField] private LineRenderer laserLineRenderer;
+
+        /// <summary>
+        /// 武器のデータ
+        /// </summary>
+        [SerializeField] private WeaponData currentWeapon;
 
         /// <summary>
         /// 自動生成されたInputクラス
@@ -84,6 +76,11 @@ namespace TPSRoguelite.InGame.Player {
         private bool isReloading;
 
         /// <summary>
+        /// 射撃可能か
+        /// </summary>
+        private bool canShoot = true;
+
+        /// <summary>
         /// 外部（アニメーションやUIなど）に現在の速度を教えるために保持するVelocity
         /// </summary>
         public Vector3 CurrentVelocity { get; private set; }
@@ -94,10 +91,18 @@ namespace TPSRoguelite.InGame.Player {
         public int CurrentAmmo { get; private set; }
 
         private void Awake() {
-            CurrentAmmo = MAX_AMMO;
+
+            if (currentWeapon != null)
+            {
+                CurrentAmmo = currentWeapon.MaxAmmo;
+            }
+            else
+            {
+                Debug.LogError("WeaponDataがありません。");
+            }
 
             inputActions = new PlayerInputActions();
-            inputActions.Player.Fire.performed += OnFire;
+            inputActions.Player.Fire.performed += OnFire; // 押し続けていると呼ばれる
             inputActions.Player.Reload.performed += OnReload;
 
             if (UnityEngine.Camera.main != null)
@@ -165,6 +170,59 @@ namespace TPSRoguelite.InGame.Player {
 
         private void OnFire(InputAction.CallbackContext context)
         {
+            if (context.performed) 
+            {
+                if (!canShoot || isReloading || currentWeapon == null) 
+                {
+                    return;
+                }
+                
+                switch (currentWeapon.WeaponFireType)
+                {
+                    case Enum.FireType.SemiAuto:
+                        ShootSemiAutoAsync(this.GetCancellationTokenOnDestroy()).Forget();
+                        break;
+
+                    case Enum.FireType.Burst:
+                        break;
+
+                    case Enum.FireType.FullAuto:
+                        break;
+
+                    default:
+                        Debug.LogWarning($"割り当てていない射撃タイプがあります。{currentWeapon.WeaponFireType}");
+                        break;
+                }
+            }
+        }
+
+        /// <summary>
+        /// セミオートの射撃処理
+        /// </summary>
+        private async UniTaskVoid ShootSemiAutoAsync(CancellationToken token) 
+        {
+            if (CurrentAmmo == 0) 
+            {
+                ReloadAsync().Forget();
+                return;
+            }
+
+            canShoot = false;
+
+            CurrentAmmo--;
+            Debug.Log($"セミオートで撃った！弾数：{CurrentAmmo}");
+            Shoot();
+
+            await UniTask.Delay(System.TimeSpan.FromSeconds(currentWeapon.FireRate), cancellationToken: token);
+
+            canShoot = true;
+        }
+
+        /// <summary>
+        /// 共通の射撃処理
+        /// </summary>
+        private void Shoot() 
+        {
             Ray ray = new Ray(mainCameraTransform.position, mainCameraTransform.forward);
 
             // 光線に何かが当たったか判定
@@ -176,14 +234,14 @@ namespace TPSRoguelite.InGame.Player {
 
                 // ダメージを受ける性質を持ったオブジェクトであればダメージを与える
                 if (target != null) {
-                    target.TakeDamage(ATTACK_DAMAGE);
+                    target.TakeDamage(currentWeapon.AttackPower);
                 }
             }
         }
 
         private void OnReload(InputAction.CallbackContext context)
         {
-            if (isReloading || CurrentAmmo == MAX_AMMO) {
+            if (isReloading || CurrentAmmo == currentWeapon.MaxAmmo) {
                 return;
             }
 
@@ -195,9 +253,9 @@ namespace TPSRoguelite.InGame.Player {
             isReloading = true;
             Debug.Log("リロード中");
 
-            await UniTask.Delay(TimeSpan.FromSeconds(RELOAD_TIME), cancellationToken: this.GetCancellationTokenOnDestroy());
+            await UniTask.Delay(TimeSpan.FromSeconds(currentWeapon.ReloadTime), cancellationToken: this.GetCancellationTokenOnDestroy());
 
-            CurrentAmmo = MAX_AMMO;
+            CurrentAmmo = currentWeapon.MaxAmmo;
             isReloading = false;
             Debug.Log("リロード完了");
         }
