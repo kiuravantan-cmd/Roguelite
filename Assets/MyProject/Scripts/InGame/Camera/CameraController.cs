@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace TPSRoguelite.InGame.Camera 
 {
@@ -57,6 +58,9 @@ namespace TPSRoguelite.InGame.Camera
         {
             inputActions = new PlayerInputActions();
 
+            inputActions.Player.Aim.started += OnAim;
+            inputActions.Player.Aim.canceled += OnAim;
+
             // マウスカーソルを画面中央にロックして非表示にする
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
@@ -87,17 +91,6 @@ namespace TPSRoguelite.InGame.Camera
             currentPitch -= lookInput.y * lookSensitivity;
 
             currentPitch = Mathf.Clamp(currentPitch, minPitch, maxPitch);
-
-            // ※将来、ここにInputSystemのエイムボタン（右クリック等）の処理を書きます
-            // 【テスト用】右クリックを押している間だけエイム状態にする
-            if (UnityEngine.InputSystem.Mouse.current.rightButton.isPressed)
-            {
-                isAiming = true;
-            }
-            else
-            {
-                isAiming = false;
-            }
         }
 
         private void LateUpdate()
@@ -135,6 +128,21 @@ namespace TPSRoguelite.InGame.Camera
             // 7. 最終的な位置と回転を適用
             transform.position = cameraPosition;
             transform.rotation = rotate;
+        }
+
+        /// <summary>
+        /// エイムボタンが押された/離された時に呼ばれる処理
+        /// </summary>
+        public void OnAim (InputAction.CallbackContext context)
+        {
+            if (context.started)
+            {
+                isAiming = true;
+            }
+            else if (context.canceled)
+            {
+                isAiming = false;
+            }
         }
     }
 }
