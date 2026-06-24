@@ -1,13 +1,13 @@
 using UnityEngine;
 using UnityEngine.Events;
 using Core.Interface;
-using TPSRoguelite.InGame.Data;
+using Core.MasterData;
 
 namespace TPSRoguelite.InGame.Enemy 
 {
     public class EnemyState : MonoBehaviour, IDamageable
     {
-        [field: SerializeField] public EnemyData EnemyDataAsset { get; private set; }
+        public EnemyDataRecord EnemyDataAsset { get; private set; }
 
         /// <summary>
         /// åªç›ÇÃëÃóÕ
@@ -16,17 +16,15 @@ namespace TPSRoguelite.InGame.Enemy
 
         public event UnityAction<EnemyState> OnReturnToPoolAction;
 
-
-        private void OnEnable()
+        public void Initialize(ulong id)
         {
-            if (EnemyDataAsset != null)
-            {
-                CurrentHP = EnemyDataAsset.MaxHp;
-            }
-            else
-            {
-                Debug.LogError("EnemyDataÇ™ÉZÉbÉgÇ≥ÇÍÇƒÇ¢Ç‹ÇπÇÒ");
-            }
+            EnemyDataAsset = MasterDataAccessor.Instance.GetById<EnemyDataRecord>(id);
+        }
+
+        public void Setup()
+        {
+            CurrentHP = EnemyDataAsset.MaxHp;
+            gameObject.SetActive(true);
         }
 
         public void TakeDamage(int damageAmount) 

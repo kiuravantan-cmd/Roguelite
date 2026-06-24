@@ -1,8 +1,8 @@
+using Core.MasterData;
 using Core.Interface;
 using Cysharp.Threading.Tasks;
 using System;
 using System.Threading;
-using TPSRoguelite.InGame.Data;
 using TPSRoguelite.InGame.Enums;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -49,7 +49,7 @@ namespace TPSRoguelite.InGame.Player {
         /// <summary>
         /// 武器のデータ
         /// </summary>
-        [SerializeField] private WeponData currentWeapon;
+        private WeaponDataRecord currentWeapon;
 
         /// <summary>
         /// 射撃のキャンセルトークン
@@ -96,8 +96,14 @@ namespace TPSRoguelite.InGame.Player {
         /// </summary>
         public int CurrentAmmo { get; private set; }
 
-        private void Awake()
+        private void Start()
         {
+            gameObject.SetActive(false);
+        }
+
+        public void Setup()
+        {
+            currentWeapon = MasterDataAccessor.Instance.GetById<WeaponDataRecord>(1);
             if (currentWeapon != null)
             {
                 CurrentAmmo = currentWeapon.MaxAmmo;
@@ -120,14 +126,24 @@ namespace TPSRoguelite.InGame.Player {
             {
                 Debug.LogError("Main Cameraが見つかりません。");
             }
+
+            gameObject.SetActive(true);
         }
 
-        private void OnEnable() {
-            inputActions.Enable();
+        private void OnEnable()
+        {
+            if (inputActions != null)
+            {
+                inputActions.Enable();
+            }
         }
 
-        private void OnDisable() {
-            inputActions.Disable();
+        private void OnDisable()
+        {
+            if (inputActions != null)
+            {
+                inputActions.Disable();
+            }
         }
 
         private void Update() {
@@ -188,17 +204,17 @@ namespace TPSRoguelite.InGame.Player {
                 // 押された瞬間に、新しいキャンセルスイッチを作成
                 fireCts = new CancellationTokenSource();
  
-                if (currentWeapon.FireType == FireType.SemiAuto)
+                if ((FireType)currentWeapon.FireType == FireType.SemiAuto)
                 {
                     // セミオートは指を離しても中断しないので、消滅トークンだけ渡す
                     ShootSemiAutoAsync(this.GetCancellationTokenOnDestroy()).Forget();
                 }
-                else if (currentWeapon.FireType == FireType.Burst)
+                else if ((FireType)currentWeapon.FireType == FireType.Burst)
                 {
                     // バーストも途中で止まらないように消滅トークンだけ渡す
                     ShootBurstAsync(this.GetCancellationTokenOnDestroy()).Forget();
                 }
-                else if (currentWeapon.FireType == FireType.FullAuto)
+                else if ((FireType)currentWeapon.FireType == FireType.FullAuto)
                 {
                     // フルオートは指を離した時に止めるため、合体させたトークンを渡す
                     ShootFullAutoAsync(fireCts.Token).Forget();

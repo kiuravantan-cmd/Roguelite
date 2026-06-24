@@ -358,7 +358,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fd65d0ff2743e854b855043520fa27d1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TPSRoguelite.InGame.Camera.CameraController
+  lookSensitivity: 0.2
+  minPitch: -10
+  maxPitch: 60
   target: {fileID: 871598434}
+  normalDistance: 3
+  normalHeightOffset: 1.2
+  normalShoulderOffset: 0.8
+  aimDistance: 1
+  aimHeightOffset: 1.2
+  aimShoulderOffset: 0.5
+  zoomSpeed: 10
 --- !u!114 &345161508
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -754,6 +764,76 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 7414631405197641101, guid: 508b5f20da7e2b040b8dc5889f86cfdb, type: 3}
   m_PrefabInstance: {fileID: 871598433}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &871598435 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1678090033959782453, guid: 508b5f20da7e2b040b8dc5889f86cfdb, type: 3}
+  m_PrefabInstance: {fileID: 871598433}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 03e9d43d24628224bb4b9ed71484d1c6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerController
+--- !u!1 &1205282188
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1205282189}
+  - component: {fileID: 1205282190}
+  - component: {fileID: 1205282191}
+  m_Layer: 0
+  m_Name: Manager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1205282189
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1205282188}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1205282190
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1205282188}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 291937398eb1b3f4b96b37022aae740c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InGame.Manager.GameManager
+  player: {fileID: 871598435}
+  enemySpawner: {fileID: 1830474869}
+--- !u!114 &1205282191
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1205282188}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 54d4c46815fe4ed4ca814cb3920486af, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Core.MasterData.MasterDataAccessor
 --- !u!1 &1396278646
 GameObject:
   m_ObjectHideFlags: 0
@@ -1056,7 +1136,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &1830474869
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1341,3 +1421,4 @@ SceneRoots:
   - {fileID: 16992094}
   - {fileID: 1830474870}
   - {fileID: 11083115}
+  - {fileID: 1205282189}
