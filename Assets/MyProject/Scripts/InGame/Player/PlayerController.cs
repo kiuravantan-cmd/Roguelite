@@ -47,6 +47,11 @@ namespace TPSRoguelite.InGame.Player {
         [SerializeField] private LineRenderer laserLineRenderer;
 
         /// <summary>
+        /// マズルフラッシュ（銃口の火花）のエフェクト
+        /// </summary>
+        [SerializeField] private ParticleSystem muzzleFlash;
+
+        /// <summary>
         /// 武器のデータ
         /// </summary>
         private WeaponDataRecord currentWeapon;
@@ -157,32 +162,37 @@ namespace TPSRoguelite.InGame.Player {
         }
 
 
-        private void Move() {
-            if (rigidbody == null) {
+        private void Move()
+        {
+            if (rigidbody == null || mainCameraTransform == null)
+            {
                 return;
             }
 
+            Vector3 cameraForward = mainCameraTransform.forward;
+            cameraForward.y = 0f;
+            cameraForward.Normalize();
+
+            if (cameraForward != Vector3.zero)
+            {
+                Quaternion targetRotation = Quaternion.LookRotation(cameraForward);
+                rigidbody.rotation = Quaternion.Slerp(rigidbody.rotation, targetRotation, ROTATE_SPEED * Time.fixedDeltaTime);
+            }
+
             // 入力がない場合はピタッと止める
-            if (moveInput == Vector2.zero) {
+            if (moveInput == Vector2.zero)
+            {
                 rigidbody.linearVelocity = new Vector3(0f, rigidbody.linearVelocity.y, 0f);
                 CurrentVelocity = Vector3.zero;
                 return;
             }
 
             // カメラ基準の計算に変更
-            Vector3 cameraForward = mainCameraTransform.forward;
             Vector3 cameraRight = mainCameraTransform.right;
-
-            cameraForward.y = 0f;
             cameraRight.y = 0f;
-            cameraForward.Normalize();
             cameraRight.Normalize();
 
             Vector3 moveDirection = (cameraForward * moveInput.y + cameraRight * moveInput.x).normalized;
-
-            // キャラクターを進行方向へ滑らかに振り向かせる
-            Quaternion targeRotation = Quaternion.LookRotation(moveDirection);
-            rigidbody.rotation = Quaternion.Slerp(rigidbody.rotation, targeRotation, ROTATE_SPEED * Time.fixedDeltaTime);
 
             Vector3 targetVelocity = moveDirection * MOVE_SPEED;
             rigidbody.linearVelocity = new Vector3(targetVelocity.x, rigidbody.linearVelocity.y, targetVelocity.z);
@@ -304,6 +314,11 @@ namespace TPSRoguelite.InGame.Player {
 
         private void Shoot()
         {
+            if (muzzleFlash != null)
+            {
+                muzzleFlash.Play();
+            }
+
             Ray ray = new Ray(mainCameraTransform.position, mainCameraTransform.forward);
 
             // 光線に何かが当たったか判定
