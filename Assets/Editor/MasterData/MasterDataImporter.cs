@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using UnityEditor;
+using UnityEditor.AddressableAssets;
+using UnityEditor.AddressableAssets.Settings;
 using UnityEngine;
 
 namespace Assets.Editor.MasterData
@@ -124,6 +126,33 @@ namespace Assets.Editor.MasterData
                 }
 
                 AssetDatabase.CreateAsset(soInstance, exportPath);
+
+                // 保存したアセットのGUIDを取得する
+                string guid = AssetDatabase.AssetPathToGUID(exportPath);
+
+                // 現在のAddressablesの設定ファイルを取得する
+                AddressableAssetSettings settings = AddressableAssetSettingsDefaultObject.Settings;
+
+                if (settings != null)
+                {
+                    // デフォルトのグループにアセットを登録（エントリを作成）する
+                    AddressableAssetGroup group = settings.DefaultGroup;
+                    AddressableAssetEntry entry = settings.CreateOrMoveEntry(guid, group);
+
+                    if (entry != null)
+                    {
+                        // アドレスをCSVの名前（例: "EnemyData"）に設定する
+                        entry.address = fileName;
+
+                        // ラベルをSettingsに追加し、そのアセットにラベルを付与する
+                        settings.AddLabel(fileName);
+                        entry.SetLabel(fileName, true, true);
+                    }
+                }
+                else
+                {
+                    Debug.LogWarning("AddressableAssetSettingsが見つかりません。Window > Asset Management > Addressables > Groups から設定を作成してください。");
+                }
             }
 
             AssetDatabase.SaveAssets();
@@ -166,11 +195,6 @@ namespace Assets.Editor.MasterData
             if (type == typeof(bool))
             {
                 return !string.IsNullOrEmpty(value) && bool.Parse(value);
-            }
-
-            if (type == typeof(Enum))
-            {
-                return Enum.Parse(type, value);
             }
 
             return value;
