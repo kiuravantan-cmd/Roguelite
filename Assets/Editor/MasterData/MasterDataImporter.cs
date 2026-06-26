@@ -22,13 +22,8 @@ namespace Assets.Editor.MasterData
         /// </summary>
         private const string EXPORT_FOLDER_PATH = "Assets/Data/MastaerData";
 
-        /// <summary>
-        /// プロジェクト内のデータクラスが置かれている名前空間
-        /// </summary>
-        private const string DATA_NAMESPACE = "Core.MasterData.";
-        private const string kOutputFileFormat = "{0}.asset";
-        private const string kMasterDataContainerFormat = "Core.MasterData.{0},Assembly-CSharp";
-        private const string kMasterDataRecordFormat = "Core.MasterData.{0}Record,Assembly-CSharp";
+        private const string MASTER_DATA_CONTAINER_FORMAT = "Core.MasterData.{0},Assembly-CSharp";
+        private const string MASTER_DATA_RECORD_FORMAT = "Core.MasterData.{0}Record,Assembly-CSharp";
 
         [MenuItem("Tools/CSVを一括でMasterDataに変換")]
         public static void GenerateAllFromCSV()
@@ -53,8 +48,8 @@ namespace Assets.Editor.MasterData
                 string fileName = Path.GetFileNameWithoutExtension(csvPath);
 
                 // ファイル名から生成すべきSOのクラス名とレコードのクラス名を推測
-                Type soType = Type.GetType(string.Format(kMasterDataContainerFormat, fileName));
-                Type recordType = Type.GetType(string.Format(kMasterDataRecordFormat, fileName));
+                Type soType = Type.GetType(string.Format(MASTER_DATA_CONTAINER_FORMAT, fileName));
+                Type recordType = Type.GetType(string.Format(MASTER_DATA_RECORD_FORMAT, fileName));
 
                 if (soType == null || recordType == null)
                 {
