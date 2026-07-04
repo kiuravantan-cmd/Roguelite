@@ -4,8 +4,9 @@ using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using Cysharp.Threading.Tasks;
 using System;
-using TPSRoguelite.InGame.Data;
 using System.Threading;
+using Core.MasterData;
+using TPSRoguelite.InGame.Enum;
 
 namespace TPSRoguelite.InGame.Player {
 
@@ -48,7 +49,7 @@ namespace TPSRoguelite.InGame.Player {
         /// <summary>
         /// 武器のデータ
         /// </summary>
-        [SerializeField] private WeaponData currentWeapon;
+        private WeaponDataRecord currentWeapon;
 
         /// <summary>
         /// 自動生成されたInputクラス
@@ -186,7 +187,7 @@ namespace TPSRoguelite.InGame.Player {
                 fireCts = new CancellationTokenSource();
                 var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(fireCts.Token, this.GetCancellationTokenOnDestroy());
                 
-                switch (currentWeapon.WeaponFireType)
+                switch ((FireType)currentWeapon.WeaponFireType)
                 {
                     case Enum.FireType.SemiAuto:
                         ShootSemiAutoAsync(this.GetCancellationTokenOnDestroy()).Forget();

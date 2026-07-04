@@ -1,11 +1,14 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
-using TPSRoguelite.InGame.Enum;
 
-namespace TPSRoguelite.InGame.Data 
+namespace Core.MasterData 
 {
-    [CreateAssetMenu(fileName = "WeaponData", menuName = "Scriptable Objects/WeaponData")]
-    public class WeaponData : ScriptableObject 
+    [Serializable]
+    public class WeaponDataRecord : IMasterData
     {
+        [field: SerializeField] public ulong Id { get; private set; }
+
         /// <summary>
         /// 武器の名前
         /// </summary>
@@ -14,7 +17,7 @@ namespace TPSRoguelite.InGame.Data
         /// <summary>
         /// 射撃タイプ
         /// </summary>
-        [field: SerializeField] public FireType WeaponFireType { get; private set; }
+        [field: SerializeField] public int WeaponFireType { get; private set; }
 
         /// <summary>
         /// 攻撃力
@@ -40,5 +43,11 @@ namespace TPSRoguelite.InGame.Data
         /// リロード時間
         /// </summary>
         [field: SerializeField] public float ReloadTime { get; private set; }
+    }
+
+    [CreateAssetMenu(fileName = "NewWeaponData", menuName = "Scriptable Objects/WeaponData")]
+    public class WeaponData : ScriptableObject, IMasterDataContainer<WeaponDataRecord> 
+    {
+        [field: SerializeField] public List<WeaponDataRecord> Records { get; private set; }
     }
 }

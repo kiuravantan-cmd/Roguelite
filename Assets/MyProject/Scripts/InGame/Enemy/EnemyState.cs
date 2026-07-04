@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.Events;
 using Core.Interface;
+using Core.MasterData;
 
 namespace TPSRoguelite.InGame.Enemy 
 {
@@ -9,7 +10,7 @@ namespace TPSRoguelite.InGame.Enemy
         /// <summary>
         /// “G‚Ìƒf[ƒ^
         /// </summary>
-        [field: SerializeField] public EnemyData EnemyDataAsset { get; private set; }
+        public EnemyDataRecord EnemyDataAsset { get; private set; }
 
         /// <summary>
         /// Œ»İ‚Ì‘Ì—Í
