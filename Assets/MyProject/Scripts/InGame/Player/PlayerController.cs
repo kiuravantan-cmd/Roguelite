@@ -101,6 +101,11 @@ namespace TPSRoguelite.InGame.Player {
         /// </summary>
         public int CurrentAmmo { get; private set; }
 
+        /// <summary>
+        /// 現在の経験値
+        /// </summary>
+        public int CurrentExp { get; private set; }
+
         private void Start()
         {
             gameObject.SetActive(false);
@@ -380,6 +385,15 @@ namespace TPSRoguelite.InGame.Player {
             {
                 laserLineRenderer.SetPosition(1, ray.GetPoint(LASER_MAX_DISTANCE));
             }
+        }
+
+        /// <summary>
+        /// 経験値を追加する
+        /// </summary>
+        public void AddExperience (int amount)
+        {
+            CurrentExp += amount;
+            Debug.Log($"経験値を{amount}獲得！ 現在の経験値: {CurrentExp}");
         }
     }
 }
