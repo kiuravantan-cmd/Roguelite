@@ -1,11 +1,13 @@
-using Core.MasterData;
 using Core.Interface;
+using Core.MasterData;
 using Cysharp.Threading.Tasks;
 using System;
 using System.Threading;
+using TMPro;
 using TPSRoguelite.InGame.Enums;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
 
 namespace TPSRoguelite.InGame.Player {
 
@@ -51,6 +53,11 @@ namespace TPSRoguelite.InGame.Player {
         /// </summary>
         [SerializeField] private ParticleSystem muzzleFlash;
 
+        [Header("UI & Effects")]
+        [SerializeField] private Slider expSlider;
+        [SerializeField] private TextMeshProUGUI levelUpText;
+        [SerializeField] private ParticleSystem levelUpEffect;
+
         /// <summary>
         /// 武器のデータ
         /// </summary>
@@ -92,6 +99,11 @@ namespace TPSRoguelite.InGame.Player {
         private bool canShoot = true;
 
         /// <summary>
+        /// 次のレベルに必要な経験値
+        /// </summary>
+        private int requiredExp;
+
+        /// <summary>
         /// 外部（アニメーションやUIなど）に現在の速度を教えるために保持するVelocity
         /// </summary>
         public Vector3 CurrentVelocity { get; private set; }
@@ -105,6 +117,11 @@ namespace TPSRoguelite.InGame.Player {
         /// 現在の経験値
         /// </summary>
         public int CurrentExp { get; private set; }
+
+        /// <summary>
+        /// 現在のレベル
+        /// </summary>
+        public int CurrentLevel { get; private set; }
 
         private void Start()
         {
@@ -121,6 +138,21 @@ namespace TPSRoguelite.InGame.Player {
             else
             {
                 Debug.LogError("currentWeaponが見つかりませんでした");
+            }
+
+            CurrentLevel = 1;
+            CurrentExp = 0;
+
+            // 最初はオーブ5個でレベルアップ
+            requiredExp = 5;
+
+            // ゲージを空にする
+            UpdateExpUI();
+
+            if (levelUpText != null)
+            {
+                // 文字は最初は隠しておく
+                levelUpText.enabled = false;
             }
 
             inputActions = new PlayerInputActions();
@@ -390,10 +422,77 @@ namespace TPSRoguelite.InGame.Player {
         /// <summary>
         /// 経験値を追加する
         /// </summary>
-        public void AddExperience (int amount)
+        public void AddExperience(int amount)
         {
             CurrentExp += amount;
             Debug.Log($"経験値を{amount}獲得！ 現在の経験値: {CurrentExp}");
+
+            // 経験値が満タンになったか判定（レベルアップ）
+            if (CurrentExp >= requiredExp)
+            {
+                LevelUp();
+            }
+
+            // UIのゲージを更新
+            UpdateExpUI();
+        }
+
+        /// <summary>
+        /// レベルアップの処理
+        /// </summary>
+        private void LevelUp ()
+        {
+            CurrentLevel++;
+
+            // 余った経験値を消さずに、次のレベルに持ち越す（重要！）
+            CurrentExp -= requiredExp;
+
+            // 次のレベルに必要な経験値を再計算（例：今のレベル × 5）
+            requiredExp = CurrentLevel * 5;
+
+            Debug.Log($"レベルアップ！ レベル {CurrentLevel} になった！");
+
+            // レベルアップエフェクトの再生
+            if (levelUpEffect != null)
+            {
+                levelUpEffect.Play();
+            }
+
+            // 画面にド派手な文字を出す
+            ShowLevelUpTextAsync().Forget();
+        }
+
+        /// <summary>
+        /// UIゲージの長さを更新する
+        /// </summary>
+        private void UpdateExpUI ()
+        {
+            if (expSlider != null)
+            {
+                // 0.0（空） ～ 1.0（満タン） の割合を計算してSliderにセットする
+                expSlider.value = (float)CurrentExp / requiredExp;
+            }
+        }
+
+        /// <summary>
+        /// レベルアップの文字を数秒間だけ表示して自動で消す
+        /// </summary>
+        private async UniTaskVoid ShowLevelUpTextAsync ()
+        {
+            if (levelUpText == null)
+            {
+                return;
+            }
+
+            // テキストの中身を書き換えて表示
+            levelUpText.text = $"LEVEL UP!\n<size=50%>Lv.{CurrentLevel}</size>";
+            levelUpText.enabled = true;
+
+            // 2秒間待つ
+            await UniTask.Delay(TimeSpan.FromSeconds(2.0f), cancellationToken: this.GetCancellationTokenOnDestroy());
+
+            // 2秒後に自動で非表示にする
+            levelUpText.enabled = false;
         }
     }
 }
