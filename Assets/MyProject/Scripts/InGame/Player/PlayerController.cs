@@ -9,7 +9,8 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
-namespace TPSRoguelite.InGame.Player {
+namespace TPSRoguelite.InGame.Player
+{
 
     public class PlayerController : MonoBehaviour
     {
@@ -57,6 +58,10 @@ namespace TPSRoguelite.InGame.Player {
         [SerializeField] private Slider expSlider;
         [SerializeField] private TextMeshProUGUI levelUpText;
         [SerializeField] private ParticleSystem levelUpEffect;
+
+        [Header("Weapon UI")]
+        [SerializeField] private TextMeshProUGUI fireModeText;
+        [SerializeField] private TextMeshProUGUI ammoText;
 
         /// <summary>
         /// 武器のデータ
@@ -123,12 +128,12 @@ namespace TPSRoguelite.InGame.Player {
         /// </summary>
         public int CurrentLevel { get; private set; }
 
-        private void Start()
+        private void Start ()
         {
             gameObject.SetActive(false);
         }
 
-        public void Setup()
+        public void Setup ()
         {
             currentWeapon = MasterDataAccessor.Instance.GetById<WeaponDataRecord>(1);
             if (currentWeapon != null)
@@ -169,10 +174,12 @@ namespace TPSRoguelite.InGame.Player {
                 Debug.LogError("Main Cameraが見つかりません。");
             }
 
+            UpdateWeaponUI();
+
             gameObject.SetActive(true);
         }
 
-        private void OnEnable()
+        private void OnEnable ()
         {
             if (inputActions != null)
             {
@@ -180,7 +187,7 @@ namespace TPSRoguelite.InGame.Player {
             }
         }
 
-        private void OnDisable()
+        private void OnDisable ()
         {
             if (inputActions != null)
             {
@@ -188,18 +195,20 @@ namespace TPSRoguelite.InGame.Player {
             }
         }
 
-        private void Update() {
+        private void Update ()
+        {
             moveInput = inputActions.Player.Move.ReadValue<Vector2>();
             DrawLaserPointer();
         }
 
-        private void FixedUpdate() {
+        private void FixedUpdate ()
+        {
             // 物理演算に関わる移動処理になるため、FixedUpdateで行う
             Move();
         }
 
 
-        private void Move()
+        private void Move ()
         {
             if (rigidbody == null || mainCameraTransform == null)
             {
@@ -238,7 +247,7 @@ namespace TPSRoguelite.InGame.Player {
             CurrentVelocity = rigidbody.linearVelocity;
         }
 
-        private void OnFire(InputAction.CallbackContext context)
+        private void OnFire (InputAction.CallbackContext context)
         {
             if (context.started)
             {
@@ -247,10 +256,10 @@ namespace TPSRoguelite.InGame.Player {
                 {
                     return;
                 }
- 
+
                 // 押された瞬間に、新しいキャンセルスイッチを作成
                 fireCts = new CancellationTokenSource();
- 
+
                 if ((FireType)currentWeapon.FireType == FireType.SemiAuto)
                 {
                     // セミオートは指を離しても中断しないので、消滅トークンだけ渡す
@@ -290,6 +299,7 @@ namespace TPSRoguelite.InGame.Player {
             }
 
             CurrentAmmo--;
+            UpdateCurrentAmmoUI();
             Debug.Log($"バン！ 残弾: {CurrentAmmo}");
             Shoot();
 
@@ -311,6 +321,7 @@ namespace TPSRoguelite.InGame.Player {
                 }
 
                 CurrentAmmo--;
+                UpdateCurrentAmmoUI();
                 Debug.Log($"フルオート発射！ 残弾: {CurrentAmmo}");
                 Shoot();
 
@@ -339,6 +350,7 @@ namespace TPSRoguelite.InGame.Player {
                 }
 
                 CurrentAmmo--;
+                UpdateCurrentAmmoUI();
                 Shoot();
                 Debug.Log($"バースト！ 残弾: {CurrentAmmo}");
 
@@ -349,7 +361,7 @@ namespace TPSRoguelite.InGame.Player {
             canShoot = true;
         }
 
-        private void Shoot()
+        private void Shoot ()
         {
             if (muzzleFlash != null)
             {
@@ -374,7 +386,7 @@ namespace TPSRoguelite.InGame.Player {
             }
         }
 
-        private void OnReload(InputAction.CallbackContext context)
+        private void OnReload (InputAction.CallbackContext context)
         {
             if (isReloading || CurrentAmmo == currentWeapon.MaxAmmo)
             {
@@ -384,7 +396,7 @@ namespace TPSRoguelite.InGame.Player {
             ReloadAsync().Forget();
         }
 
-        private async UniTask ReloadAsync()
+        private async UniTask ReloadAsync ()
         {
             isReloading = true;
             Debug.Log("リロード中");
@@ -392,6 +404,7 @@ namespace TPSRoguelite.InGame.Player {
             await UniTask.Delay(TimeSpan.FromSeconds(currentWeapon.ReloadTime), cancellationToken: this.GetCancellationTokenOnDestroy());
 
             CurrentAmmo = currentWeapon.MaxAmmo;
+            UpdateCurrentAmmoUI();
             isReloading = false;
             Debug.Log("リロード完了");
         }
@@ -399,9 +412,9 @@ namespace TPSRoguelite.InGame.Player {
         /// <summary>
         /// レーザーポインターの描画
         /// </summary>
-        private void DrawLaserPointer()
+        private void DrawLaserPointer ()
         {
-            if (laserLineRenderer == null || weponOrigin == null || mainCameraTransform == null) 
+            if (laserLineRenderer == null || weponOrigin == null || mainCameraTransform == null)
             {
                 return;
             }
@@ -422,7 +435,7 @@ namespace TPSRoguelite.InGame.Player {
         /// <summary>
         /// 経験値を追加する
         /// </summary>
-        public void AddExperience(int amount)
+        public void AddExperience (int amount)
         {
             CurrentExp += amount;
             Debug.Log($"経験値を{amount}獲得！ 現在の経験値: {CurrentExp}");
@@ -493,6 +506,44 @@ namespace TPSRoguelite.InGame.Player {
 
             // 2秒後に自動で非表示にする
             levelUpText.enabled = false;
+        }
+
+        private void UpdateWeaponUI()
+        {
+            if (fireModeText == null || ammoText == null)
+            {
+                return;
+            }
+
+            FireType fireType = (FireType)currentWeapon.FireType;
+            switch (fireType)
+            {
+                case FireType.SemiAuto:
+                    fireModeText.text = "Semi-Auto";
+                    fireModeText.color = Color.white;
+                    break;
+                case FireType.Burst:
+                    fireModeText.text = "Burst";
+                    fireModeText.color = Color.yellow;
+                    break;
+                case FireType.FullAuto:
+                    fireModeText.text = "Full-Auto";
+                    fireModeText.color = Color.red;
+                    break;
+                default:
+                    fireModeText.text = "Unknown";
+                    break;
+            }
+
+            UpdateCurrentAmmoUI();
+        }
+
+        private void UpdateCurrentAmmoUI()
+        {
+            if (ammoText != null)
+            {
+                ammoText.SetText($"{CurrentAmmo}/{currentWeapon.MaxAmmo}");
+            }
         }
     }
 }
