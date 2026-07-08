@@ -1,6 +1,7 @@
 using Core.Interface;
 using Core.MasterData;
 using Cysharp.Threading.Tasks;
+using DG.Tweening;
 using System;
 using System.Threading;
 using TMPro;
@@ -62,6 +63,10 @@ namespace TPSRoguelite.InGame.Player
         [Header("Weapon UI")]
         [SerializeField] private TextMeshProUGUI fireModeText;
         [SerializeField] private TextMeshProUGUI ammoText;
+
+        [Header("Reload UI")]
+        [SerializeField] private GameObject reloadUI;
+        [SerializeField] private Image reloadCircleImage;
 
         /// <summary>
         /// 武器のデータ
@@ -175,6 +180,11 @@ namespace TPSRoguelite.InGame.Player
             }
 
             UpdateWeaponUI();
+
+            if (reloadUI != null)
+            {
+                reloadUI.SetActive(false);
+            }
 
             gameObject.SetActive(true);
         }
@@ -294,7 +304,7 @@ namespace TPSRoguelite.InGame.Player
 
             if (CurrentAmmo <= 0)
             {
-                ReloadAsync().Forget();
+                Reload();
                 return;
             }
 
@@ -316,7 +326,7 @@ namespace TPSRoguelite.InGame.Player
             {
                 if (CurrentAmmo <= 0)
                 {
-                    ReloadAsync().Forget();
+                    Reload();
                     break;
                 }
 
@@ -345,7 +355,7 @@ namespace TPSRoguelite.InGame.Player
             {
                 if (CurrentAmmo <= 0)
                 {
-                    canShoot = true;
+                    Reload();
                     return;
                 }
 
@@ -393,20 +403,44 @@ namespace TPSRoguelite.InGame.Player
                 return;
             }
 
-            ReloadAsync().Forget();
+            Reload();
         }
 
-        private async UniTask ReloadAsync ()
+        private void Reload()
         {
             isReloading = true;
-            Debug.Log("リロード中");
 
-            await UniTask.Delay(TimeSpan.FromSeconds(currentWeapon.ReloadTime), cancellationToken: this.GetCancellationTokenOnDestroy());
+            if (reloadUI != null)
+            {
+                reloadUI.SetActive(true);
+            }
+
+            if (reloadCircleImage != null)
+            {
+                reloadCircleImage.fillAmount = 0f;
+            }
+
+            DOVirtual.Float(0f, 1f, currentWeapon.ReloadTime, UpdateReloadUI).SetEase(Ease.Linear).OnComplete(FinishReload);
+        }
+
+        private void UpdateReloadUI(float value)
+        {
+            if (reloadCircleImage != null)
+            {
+                reloadCircleImage.fillAmount = value;
+            }
+        }
+
+        private void FinishReload()
+        {
+            if (reloadUI != null)
+            {
+                reloadUI.SetActive(false);
+            }
 
             CurrentAmmo = currentWeapon.MaxAmmo;
             UpdateCurrentAmmoUI();
             isReloading = false;
-            Debug.Log("リロード完了");
         }
 
         /// <summary>
