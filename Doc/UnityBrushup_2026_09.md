@@ -66,11 +66,11 @@ namespace TPSRoguelite.InGame.Camera
 +       /// 縦の最大角度
 +       /// </summary>
 +       [SerializeField] private float maxPitch = 60f;
-+        
-+       /// <summary>
-+       /// 追従するターゲット
-+       /// </summary>
-+       [SerializeField] private Transform target;
+        
+        /// <summary>
+        /// 追従するターゲット
+        /// </summary>
+        [SerializeField] private Transform target;
 +
 +       [Header("カメラの視点")]
 +
