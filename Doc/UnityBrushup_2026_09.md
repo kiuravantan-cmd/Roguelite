@@ -22,6 +22,9 @@ using UnityEngine;
 namespace TPSRoguelite.InGame.Camera 
 {
     public class CameraController : MonoBehaviour 
+    {namespace TPSRoguelite.InGame.Camera 
+{
+    public class CameraController : MonoBehaviour 
     {
 -       /// <summary>
 -       /// マウス感度
@@ -47,27 +50,6 @@ namespace TPSRoguelite.InGame.Camera
 -       /// 縦の最大角度
 -       /// </summary>
 -       private float MAX_PITCH = 60f;
-
-        /// <summary>
-        /// 物理演算コンポーネント
-        /// </summary>
-        [SerializeField] private Rigidbody rigidbody;
-
-        /// <summary>
-        /// 銃口のトランスフォーム
-        /// </summary>
-        [SerializeField] private Transform weponOrigin;
-
-        /// <summary>
-        /// レーザーポインターの描画コンポーネント
-        /// </summary>
-        [SerializeField] private LineRenderer laserLineRenderer;
-
-        /// <summary>
-        /// 武器のID（デフォルトは1）
-        /// </summary>
-        [SerializeField] private ulong weaponId = 1;
-
 +       [Header("カメラの基本設定")]
 +
 +       /// <summary>
@@ -107,60 +89,35 @@ namespace TPSRoguelite.InGame.Camera
 +       /// </summary>
 +       [SerializeField] private float targetShoulderOffset = 0.8f;
 
-        private WeaponDataRecord currentWeapon;
+        /// <summary>
+        /// 自動生成されたクラス
+        /// </summary>
         private PlayerInputActions inputActions;
-        private Vector2 moveInput = Vector2.zero;
-        private Vector3 moveDirection;
-        private Transform mainCameraTransform;
-        private bool isReloading;
-        private bool canShoot = true;
-        private CancellationTokenSource fireCts;
+
+        // 既存の変数省略
+
+        /// <summary>
+        /// 縦の回転角度（X軸回転）
+        /// </summary>
+        private float currentPitch = 20f;
 
 +       // 現在のカメラの位置情報（滑らかに変化させるための変数）
 +       private float currentDistance;
 +       private float currentHeightOffset;
 +       private float currentShoulderOffset;
 
-        public Vector3 CurrentVelocity { get; private set; }
-        public int CurrentAmmo { get; private set; }
-
-        private void Start() 
+        private void Awake() 
         {
-            gameObject.SetActive(false);
-        }
-
-        public void Setup()
-        {
-            currentWeapon = MasterDataAccessor.Instance.GetById<WeaponDataRecord>(weaponId);
-            if (currentWeapon != null)
-            {
-                CurrentAmmo = currentWeapon.MaxAmmo;
-            }
-            else
-            {
-                Debug.LogError("WeaponDataがありません。");
-            }
-
             inputActions = new PlayerInputActions();
-            inputActions.Player.Fire.performed += OnFire; // 押し続けていると呼ばれる
-            inputActions.Player.Fire.canceled += OnFire;
-            inputActions.Player.Reload.performed += OnReload;
 
-            if (UnityEngine.Camera.main != null)
-            {
-                mainCameraTransform = UnityEngine.Camera.main.transform;
-            }
-            else
-            {
-                Debug.LogError("Main Cameraが見つかりません。");
-            }
+            // マウスカーソルを画面中央にロックして非表示にする
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
 
 +           // 最初は通常時の視点をセットしておく
 +           currentDistance = targetDistance;
 +           currentHeightOffset = targetHeightOffset;
 +           currentShoulderOffset = targetShoulderOffset;
-
-            gameObject.SetActive(true);
         }
 
         private void OnEnable() 
