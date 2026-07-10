@@ -421,68 +421,9 @@ Addressablesの LoadAssetsAsync を使って、指定したラベル（例えば
 ゲーム開始時にマスターデータをロードする仕組みができました。しかし、ロードには数秒かかることがあります。<br>
 ロードが終わっていないのにプレイヤーが動いたり、敵が出現したりするとエラーになってしまいます。 そこで、「GameManager」という司令塔を作り、「ロードが完了するまでプレイヤーの移動と敵の発生を一時停止（SetActive(false)）させる仕組み」を導入します。
 
-`Scripts/InGame` フォルダに `Manager` フォルダを作成してください。<br>
-作成した `Scripts/InGame/Manager` フォルダに `GameManager.cs` を作成してください。<br>
-**ファイル名： `GameManager.cs`**
-```cs
-using Core.MasterData;
-using Cysharp.Threading.Tasks;
-using TPSRoguelite.InGame.Player;
-using TPSRoguelite.InGame.Spawner;
-using UnityEngine;
-
-namespace InGame.Manager
-{
-    public class GameManager : MonoBehaviour
-    {
-        public static GameManager Instance { get; private set; }
-
-        [SerializeField] private PlayerController player = null;
-        [SerializeField] private EnemySpawner enemySpawner = null;
-
-        private void Awake()
-        {
-            if (Instance == null)
-            {
-                Instance = this;
-                DontDestroyOnLoad(gameObject);
-            }
-            else
-            {
-                Destroy(gameObject);
-            }
-        }
-
-        private void Start()
-        {
-            // 非同期でセットアップを開始する
-            Setup().Forget();
-        }
-
-        private async UniTaskVoid Setup()
-        {
-            // 【重要】ここでマスターデータの読み込みが完了するまで「待つ（await）」！
-            await MasterDataAccessor.Instance.InitializeAsync();
-
-            // 読み込みが完了したら、プレイヤーと敵発生装置の準備を始める
-            if (player != null)
-            {
-                player.Setup();
-            }
-
-            if (enemySpawner != null)
-            {
-                enemySpawner.Setup();
-            }
-        }
-    }
-}
-```
-
 司令塔の合図を待つため、`PlayerController` や `EnemySpawner` は、最初から動かないようにしておきます。<br>
 **ファイル名： `PlayerController.cs`**
 ```diff
-+using Core.MasterData;
 using Core.Interface;
 using Cysharp.Threading.Tasks;
 using System;
@@ -491,6 +432,7 @@ using System.Threading;
 using TPSRoguelite.InGame.Enums;
 using UnityEngine;
 using UnityEngine.InputSystem;
++using Core.MasterData;
 
 namespace TPSRoguelite.InGame.Player {
 
@@ -558,19 +500,44 @@ namespace TPSRoguelite.InGame.Player {
         private void OnEnable()
         {
 -           inputActions.Enable();            
-+           if (inputActions != null)
-+           {
-+               inputActions.Enable();
-+           }
++           inputActions?.Enable();
         }
 
         private void OnDisable()
         {
 -           inputActions.Disable();
-+           if (inputActions != null)
-+           {
-+               inputActions.Disable();
-+           }
++           inputActions?.Disable();
+        }
+    }
+}
+```
+
+**ファイル名： `EnemyState.cs`**
+```diff
+// using省略
+
+namespace TPSRoguelite.InGame.Enemy 
+{
+    public class EnemyState : MonoBehaviour, IDamageable
+    {
+        /// <summary>
+        /// 現在の体力
+        /// </summary>
+        public int CurrentHP { get; private set; }
+
+        public event UnityAction<EnemyState> OnReturnToPoolAction;
+
+-       private void OnEnable()
++       public void Setup()
+        {
+            if (EnemyDataAsset == null) 
+            {
+                Debug.LogError("EnemyDataがセットされていません。");
+                return;
+            }
+
+            CurrentHP = EnemyDataAsset.MaxHP;
++           gameObject.SetActive(true);
         }
     }
 }
@@ -593,7 +560,22 @@ namespace TPSRoguelite.InGame.Spawner
 
 -       private void Awake()
 -       {
--           gameObject.SetActive(false);
+-           if (enemyPrefab == null)
+-           {
+-               return;
+-           }
+-
+-           // ゲーム開始時に、あらかじめ用意した数だけ生成しておく
+-           for (int i = 0; i < POOL_SIZE; i++)
+-           {
+-               GameObject enemyObj = Instantiate(enemyPrefab);
+-               EnemyState enemy = enemyObj.GetComponent<EnemyState>();
+-               if (enemy != null) 
+-               {
+-                   enemy.gameObject.SetActive(false);
+-                   enemyPool.Enqueue(enemy);
+-               }
+-           }
 -       }
 
 -       private void Start()
@@ -621,7 +603,6 @@ namespace TPSRoguelite.InGame.Spawner
 +               }
 +           }
 +
-+           gameObject.SetActive(true);
 +           SpawnLoopAsync().Forget();
 +       }
 
@@ -688,6 +669,64 @@ namespace TPSRoguelite.InGame.Spawner
         {
             enemyPool.Enqueue(enemy);
             enemy.OnReturnToPoolAction -= ReturnToPool;
+        }
+    }
+}
+```
+
+`Scripts/InGame` フォルダに `Manager` フォルダを作成してください。<br>
+作成した `Scripts/InGame/Manager` フォルダに `GameManager.cs` を作成してください。<br>
+**ファイル名： `GameManager.cs`**
+```cs
+using Core.MasterData;
+using Cysharp.Threading.Tasks;
+using TPSRoguelite.InGame.Player;
+using TPSRoguelite.InGame.Spawner;
+using UnityEngine;
+
+namespace TPSRoguelite.InGame.Manager
+{
+    public class GameManager : MonoBehaviour
+    {
+        public static GameManager Instance { get; private set; }
+
+        [SerializeField] private PlayerController player = null;
+        [SerializeField] private EnemySpawner enemySpawner = null;
+
+        private void Awake()
+        {
+            if (Instance == null)
+            {
+                Instance = this;
+                DontDestroyOnLoad(gameObject);
+            }
+            else
+            {
+                Destroy(gameObject);
+            }
+        }
+
+        private void Start()
+        {
+            // 非同期でセットアップを開始する
+            Setup().Forget();
+        }
+
+        private async UniTaskVoid Setup()
+        {
+            // 【重要】ここでマスターデータの読み込みが完了するまで「待つ（await）」！
+            await MasterDataAccessor.Instance.InitializeAsync();
+
+            // 読み込みが完了したら、プレイヤーと敵発生装置の準備を始める
+            if (player != null)
+            {
+                player.Setup();
+            }
+
+            if (enemySpawner != null)
+            {
+                enemySpawner.Setup();
+            }
         }
     }
 }
@@ -858,19 +897,16 @@ namespace TPSRoguelite.InGame.Enemy
 +           EnemyDataAsset = MasterDataAccessor.Instance.GetById<EnemyDataRecord>(id);
 +       }
 
--       private void OnEnable()
-+       public void Setup()
+        public void Setup()
         {
--           if (EnemyDataAsset != null)
--           {
--               CurrentHP = EnemyDataAsset.MaxHp;
--           }
--           else
--           {
--               Debug.LogError("EnemyDataがセットされていません");
--           }
-+           CurrentHP = EnemyDataAsset.MaxHp;
-+           gameObject.SetActive(true);
+            if (EnemyDataAsset == null) 
+            {
+                Debug.LogError("EnemyDataがセットされていません。");
+                return;
+            }
+
+            CurrentHP = EnemyDataAsset.MaxHp;
+            gameObject.SetActive(true);
         }
     }
 }
