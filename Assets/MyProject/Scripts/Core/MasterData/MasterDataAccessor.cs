@@ -42,7 +42,10 @@ namespace Core.MasterData
 
         public async UniTask InitializeAsync()
         {
-            await UniTask.WhenAll(LoadAsync<EnemyData, EnemyDataRecord>(ENEMY_LABLEL), LoadAsync<WeaponData, WeaponDataRecord>(WEAPON_LABEL));
+            await UniTask.WhenAll(
+                LoadAsync<EnemyData, EnemyDataRecord>(ENEMY_LABLEL),
+                LoadAsync<WeaponData, WeaponDataRecord>(WEAPON_LABEL)
+                );
 
             Debug.Log("全てのマスターデータの読み込みが完了しました。");
         }

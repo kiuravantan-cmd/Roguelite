@@ -5,8 +5,8 @@ using UnityEngine.InputSystem;
 using Cysharp.Threading.Tasks;
 using System;
 using System.Threading;
-using Core.MasterData;
 using TPSRoguelite.InGame.Enum;
+using Core.MasterData;
 
 namespace TPSRoguelite.InGame.Player {
 
@@ -45,6 +45,11 @@ namespace TPSRoguelite.InGame.Player {
         /// レーザーポインターの描画コンポーネント
         /// </summary>
         [SerializeField] private LineRenderer laserLineRenderer;
+
+        /// <summary>
+        /// 武器のID（デフォルトは1）
+        /// </summary>
+        [SerializeField] private ulong weaponId = 1;
 
         /// <summary>
         /// 武器のデータ
@@ -97,13 +102,16 @@ namespace TPSRoguelite.InGame.Player {
         public int CurrentAmmo { get; private set; }
 
         private void Awake() {
+            gameObject.SetActive(false);
+        }
 
-            if (currentWeapon != null)
-            {
+        public void Setup()
+        {
+            currentWeapon = MasterDataAccessor.Instance.GetById<WeaponDataRecord>(weaponId);
+
+            if (currentWeapon != null) {
                 CurrentAmmo = currentWeapon.MaxAmmo;
-            }
-            else
-            {
+            } else {
                 Debug.LogError("WeaponDataがありません。");
             }
 
@@ -112,22 +120,21 @@ namespace TPSRoguelite.InGame.Player {
             inputActions.Player.Fire.canceled += OnFire;
             inputActions.Player.Reload.performed += OnReload;
 
-            if (UnityEngine.Camera.main != null)
-            {
+            if (UnityEngine.Camera.main != null) {
                 mainCameraTransform = UnityEngine.Camera.main.transform;
-            }
-            else
-            {
+            } else {
                 Debug.LogError("Main Cameraが見つかりません。");
             }
+
+            gameObject.SetActive(true);
         }
 
         private void OnEnable() {
-            inputActions.Enable();
+            inputActions?.Enable();
         }
 
         private void OnDisable() {
-            inputActions.Disable();
+            inputActions?.Disable();
         }
 
         private void Update() {
