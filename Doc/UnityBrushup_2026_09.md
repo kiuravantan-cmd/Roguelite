@@ -50,6 +50,12 @@ namespace TPSRoguelite.InGame.Camera
 -       /// 縦の最大角度
 -       /// </summary>
 -       private float MAX_PITCH = 60f;
+-
+        /// <summary>
+        /// 追従するターゲット
+        /// </summary>
+        [SerializeField] private Transform target;
+
 +       [Header("カメラの基本設定")]
 +
 +       /// <summary>
@@ -66,11 +72,11 @@ namespace TPSRoguelite.InGame.Camera
 +       /// 縦の最大角度
 +       /// </summary>
 +       [SerializeField] private float maxPitch = 60f;
-        
-        /// <summary>
-        /// 追従するターゲット
-        /// </summary>
-        [SerializeField] private Transform target;
++
++       /// <summary>
++       /// ズーム速度
++       /// </summary>
++       [SerializeField] private float zoomSpeed = 5.0f;
 +
 +       [Header("カメラの視点")]
 +
@@ -130,9 +136,22 @@ namespace TPSRoguelite.InGame.Camera
             inputActions.Disable();
         }
 
-        // 関数省略
+        private void Update() 
+        {
+            // マウスの移動量を取得
+            lookInput = inputActions.Player.Look.ReadValue<Vector2>();
 
-        private void Move()
+            // 感度を掛けて現在の角度に足し引きする
+-           currentYaw += lookInput.x * LOOK_SENSITIVITY;
+-           currentPitch -= lookInput.y * LOOK_SENSITIVITY;
++           currentYaw += lookInput.x * lookSensitivity;
++           currentPitch -= lookInput.y * lookSensitivity;
+
+-           currentPitch = Mathf.Clamp(currentPitch, MIN_PITCH, MAX_PITCH);
++           currentPitch = Mathf.Clamp(currentPitch, minPitch, maxPitch);
+        }
+
+        private void LateUpdate()
         {
             // カメラの移動は、プレイヤーの移動が終わった後に行う
 
@@ -263,9 +282,9 @@ namespace TPSRoguelite.InGame.Player {
         // 変数省略
 
         /// <summary>
-        /// レーザーポインターの描画コンポーネント
+        /// 武器のID（デフォルトは1）
         /// </summary>
-        [SerializeField] private LineRenderer laserLineRenderer;
+        [SerializeField] private ulong weaponId = 1;
 
 +       /// <summary>
 +       /// マズルフラッシュ（銃口の火花）のエフェクト
@@ -360,6 +379,7 @@ namespace TPSRoguelite.InGame.Player {
 using UnityEngine.Events;
 using Core.Interface;
 using Core.MasterData;
++using System;
 +using System.Threading;
 +using Cysharp.Threading.Tasks;
 
@@ -417,9 +437,15 @@ namespace TPSRoguelite.InGame.Enemy
 
         public void Setup()
         {
-+           ResetColor();
+            if (EnemyDataAsset == null) 
+            {
+                Debug.LogError("EnemyDataがセットされていません。");
+                return;
+            }
+
             CurrentHP = EnemyDataAsset.MaxHp;
             gameObject.SetActive(true);
++           ResetColor();
         }
 
         public void TakeDamage(int damageAmount) 
@@ -471,11 +497,11 @@ namespace TPSRoguelite.InGame.Enemy
 +               return;
 +           }
 +
-+           foreach (var r in modelRenderers)
++           foreach (var renderer in modelRenderers)
 +           {
-+               if (r != null)
++               if (renderer != null)
 +               {
-+                   r.material.color = Color.red;
++                   renderer.material.color = Color.red;
 +               }
 +
 +               bool isCanceled = await UniTask.Delay(System.TimeSpan.FromSeconds(FLASH_DURARION), cancellationToken: token).SuppressCancellationThrow();
@@ -544,7 +570,9 @@ namespace TPSRoguelite.InGame.Enemy
 +       /// </summary>
 +       private CancellationTokenSource hitCts;
 
-private void Update()
+        // 関数省略
+
+        private void Update()
         {
             // ターゲット（プレイヤー）とナビが存在しているか
             if (targetPlayer != null && navMeshAgent != null) 
@@ -604,13 +632,14 @@ private void Update()
 +           if (targetPlayer != null)
 +           {
 +               Vector3 dir = (transform.position - targetPlayer.position).normalized;
++
 +               // 上下には飛ばさない
 +               dir.y = 0;
 +               transform.position += dir * KNOCKBACK_FORCE;
 +           }
 +
 +           // 少し待つ（この間は敵が硬直している）
-+           bool isCanceled = await UniTask.Delay(System.TimeSpan.FromSeconds(STUN_DURATION)).SuppressCancellationThrow();
++           bool isCanceled = await UniTask.Delay(System.TimeSpan.FromSeconds(KNOCKBACK_DURATION)).SuppressCancellationThrow();
 +
 +           // 元に戻して追跡再開
 +           if (!isCanceled && navMeshAgent.isActiveAndEnabled)
