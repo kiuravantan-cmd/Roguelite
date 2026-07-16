@@ -5,34 +5,48 @@ namespace TPSRoguelite.InGame.Camera
     public class CameraController : MonoBehaviour 
     {
         /// <summary>
+        /// 追従するターゲット
+        /// </summary>
+        [SerializeField] private Transform target;
+
+        [Header("カメラの基本設定")]
+
+        /// <summary>
         /// マウス感度
         /// </summary>
-        private float LOOK_SENSITIVITY = 0.2f;
-
-        /// <summary>
-        /// プレイヤーからの距離
-        /// </summary>
-        private float DISTANCE = 5.0f;
-
-        /// <summary>
-        /// プレイヤーからの高さ
-        /// </summary>
-        private float HEIGHT_OFFSET = 1.5f;
+        [SerializeField] private float lookSensitivity = 0.2f;
 
         /// <summary>
         /// 縦の最小角度
         /// </summary>
-        private float MIN_PITCH = -10f;
+        [SerializeField] private float minPitch = -10f;
 
         /// <summary>
         /// 縦の最大角度
         /// </summary>
-        private float MAX_PITCH = 60f;
+        [SerializeField] private float maxPitch = 60f;
 
         /// <summary>
-        /// 追従するターゲット
+        /// ズーム速度
         /// </summary>
-        [SerializeField] private Transform target;
+        [SerializeField] private float zoomSpeed = 5.0f;
+
+        [Header("カメラの視点")]
+
+        /// <summary>
+        /// 後ろに下がる距離
+        /// </summary>
+        [SerializeField] private float targetDistance = 3.0f;
+
+        /// <summary>
+        /// 高さ
+        /// </summary>
+        [SerializeField] private float targetHeightOffset = 1.2f;
+
+        /// <summary>
+        /// 右にずらす距離
+        /// </summary>
+        [SerializeField] private float targetShoulderOffset = 0.8f;
 
         /// <summary>
         /// 自動生成されたクラス
@@ -54,6 +68,11 @@ namespace TPSRoguelite.InGame.Camera
         /// </summary>
         private float currentPitch = 20f;
 
+        // 現在のカメラの位置情報（滑らかに変化させるための変数）
+        private float currentDistance;
+        private float currentHeightOffset;
+        private float currentShoulderOffset;
+
         private void Awake() 
         {
             inputActions = new PlayerInputActions();
@@ -61,11 +80,16 @@ namespace TPSRoguelite.InGame.Camera
             // マウスカーソルを画面中央にロックして非表示にする
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
+
+            // 最初は通常時の視点をセットしておく
+            currentDistance = targetDistance;
+            currentHeightOffset = targetHeightOffset;
+            currentShoulderOffset = targetShoulderOffset;
         }
 
         private void OnEnable() 
         {
-            inputActions.Enable();    
+            inputActions.Enable();
         }
 
         private void OnDisable() 
@@ -79,10 +103,10 @@ namespace TPSRoguelite.InGame.Camera
             lookInput = inputActions.Player.Look.ReadValue<Vector2>();
 
             // 感度を掛けて現在の角度に足し引きする
-            currentYaw += lookInput.x * LOOK_SENSITIVITY;
-            currentPitch -= lookInput.y * LOOK_SENSITIVITY;
+            currentYaw += lookInput.x * lookSensitivity;
+            currentPitch -= lookInput.y * lookSensitivity;
 
-            currentPitch = Mathf.Clamp(currentPitch, MIN_PITCH, MAX_PITCH);
+            currentPitch = Mathf.Clamp(currentPitch, minPitch, maxPitch);
         }
 
         private void LateUpdate()
@@ -95,14 +119,22 @@ namespace TPSRoguelite.InGame.Camera
                 return;
             }
 
-            // 注視点の計算（プレイヤーの腰あたり）
-            Vector3 targetPosition = target.position + Vector3.up * HEIGHT_OFFSET;
+            // 1. 現在の数値を、目標の数値に向かって滑らかに変化させる（Mathf.Lerp）
+            currentDistance = Mathf.Lerp(currentDistance, targetDistance, Time.deltaTime * zoomSpeed);
+            currentHeightOffset = Mathf.Lerp(currentHeightOffset, targetHeightOffset, Time.deltaTime * zoomSpeed);
+            currentShoulderOffset = Mathf.Lerp(currentShoulderOffset, targetShoulderOffset, Time.deltaTime * zoomSpeed);
 
-            // 角度をQuaternionに変換
+            // 2. カメラの回転を計算
             Quaternion rotate = Quaternion.Euler(currentPitch, currentYaw, 0f);
 
-            // 注視点から、計算した角度から後ろ方向へ距離分だけ離した位置を計算
-            Vector3 cameraPosition = targetPosition - (rotate * Vector3.forward * DISTANCE);
+            // 3. 注視点の計算（プレイヤーの高さ）
+            Vector3 basePosition = target.position + Vector3.up * currentHeightOffset;
+
+            // 4. 肩越し視点にするため、カメラにとっての「右方向」へずらす
+            Vector3 shoulderPosition = basePosition + (rotate * Vector3.right * currentShoulderOffset);
+
+            // 5. そこから、カメラにとっての「後ろ方向」へ距離分だけ離す
+            Vector3 cameraPosition = shoulderPosition - (rotate * Vector3.forward * currentDistance);
 
             // カメラの位置と回転を設定
             transform.position = cameraPosition;

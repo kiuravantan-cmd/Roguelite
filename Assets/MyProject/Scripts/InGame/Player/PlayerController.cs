@@ -7,10 +7,12 @@ using System;
 using System.Threading;
 using TPSRoguelite.InGame.Enum;
 using Core.MasterData;
+using TMPro;
 
 namespace TPSRoguelite.InGame.Player {
 
-    public class PlayerController : MonoBehaviour {
+    public class PlayerController : MonoBehaviour
+    {
         /// <summary>
         /// 移動速度
         /// </summary>
@@ -50,6 +52,17 @@ namespace TPSRoguelite.InGame.Player {
         /// 武器のID（デフォルトは1）
         /// </summary>
         [SerializeField] private ulong weaponId = 1;
+
+        /// <summary>
+        /// マズルフラッシュ（銃口の火花）のエフェクト
+        /// </summary>
+        [SerializeField] private ParticleSystem muzzleFlash;
+
+        [Header("Weapon UI")]
+
+        [SerializeField] private TextMeshProUGUI fireModeText;
+
+        [SerializeField] private TextMeshProUGUI ammoText;
 
         /// <summary>
         /// 武器のデータ
@@ -126,6 +139,8 @@ namespace TPSRoguelite.InGame.Player {
                 Debug.LogError("Main Cameraが見つかりません。");
             }
 
+            UpdateFireModeUI();
+
             gameObject.SetActive(true);
         }
 
@@ -148,9 +163,23 @@ namespace TPSRoguelite.InGame.Player {
         }
 
 
-        private void Move() {
-            if (rigidbody == null) {
+        private void Move()
+        {
+            if (rigidbody == null || mainCameraTransform == null)
+            {
                 return;
+            }
+
+            // カメラの水平方向の前方を計算 (入力の有無に関わらず常に計算する)
+            Vector3 cameraForward = mainCameraTransform.forward;
+            cameraForward.y = 0f;
+            cameraForward.Normalize();
+
+            // キャラクターを常に「カメラの向いている方向」へ振り向かせる
+            if (cameraForward != Vector3.zero)
+            {
+                Quaternion targetRotation = Quaternion.LookRotation(cameraForward);
+                rigidbody.rotation = Quaternion.Slerp(rigidbody.rotation, targetRotation, ROTATE_SPEED * Time.fixedDeltaTime);
             }
 
             // 入力がない場合はピタッと止める
@@ -161,20 +190,13 @@ namespace TPSRoguelite.InGame.Player {
             }
 
             // カメラ基準の計算に変更
-            Vector3 cameraForward = mainCameraTransform.forward;
             Vector3 cameraRight = mainCameraTransform.right;
-
-            cameraForward.y = 0f;
             cameraRight.y = 0f;
-            cameraForward.Normalize();
             cameraRight.Normalize();
 
             Vector3 moveDirection = (cameraForward * moveInput.y + cameraRight * moveInput.x).normalized;
 
-            // キャラクターを進行方向へ滑らかに振り向かせる
-            Quaternion targeRotation = Quaternion.LookRotation(moveDirection);
-            rigidbody.rotation = Quaternion.Slerp(rigidbody.rotation, targeRotation, ROTATE_SPEED * Time.fixedDeltaTime);
-
+            // 物理演算で移動させる
             Vector3 targetVelocity = moveDirection * MOVE_SPEED;
             rigidbody.linearVelocity = new Vector3(targetVelocity.x, rigidbody.linearVelocity.y, targetVelocity.z);
 
@@ -236,6 +258,7 @@ namespace TPSRoguelite.InGame.Player {
             canShoot = false;
 
             CurrentAmmo--;
+            UpdateCurrentAmmoUI();
             Debug.Log($"セミオートで撃った！弾数：{CurrentAmmo}");
             Shoot();
 
@@ -260,6 +283,7 @@ namespace TPSRoguelite.InGame.Player {
                 }
 
                 CurrentAmmo--;
+                UpdateCurrentAmmoUI();
                 Shoot();
                 Debug.Log($"バースト！残弾数：{CurrentAmmo}");
 
@@ -283,6 +307,7 @@ namespace TPSRoguelite.InGame.Player {
                 }
 
                 CurrentAmmo--;
+                UpdateCurrentAmmoUI();
                 Debug.Log($"フルオート！残弾数：{CurrentAmmo}");
                 Shoot();
 
@@ -303,6 +328,11 @@ namespace TPSRoguelite.InGame.Player {
         /// </summary>
         private void Shoot() 
         {
+            if (muzzleFlash != null)
+            {
+                muzzleFlash.Play();
+            }
+
             Ray ray = new Ray(mainCameraTransform.position, mainCameraTransform.forward);
 
             // 光線に何かが当たったか判定
@@ -336,6 +366,7 @@ namespace TPSRoguelite.InGame.Player {
             await UniTask.Delay(TimeSpan.FromSeconds(currentWeapon.ReloadTime), cancellationToken: this.GetCancellationTokenOnDestroy());
 
             CurrentAmmo = currentWeapon.MaxAmmo;
+            UpdateCurrentAmmoUI();
             isReloading = false;
             Debug.Log("リロード完了");
         }
@@ -360,6 +391,44 @@ namespace TPSRoguelite.InGame.Player {
             else
             {
                 laserLineRenderer.SetPosition(1, ray.GetPoint(LASER_MAX_DISTANCE));
+            }
+        }
+
+        private void UpdateFireModeUI ()
+        {
+            if (fireModeText == null || currentWeapon == null)
+            {
+                return;
+            }
+
+            FireType fireType = (FireType)currentWeapon.WeaponFireType;
+            switch (fireType)
+            {
+                case FireType.SemiAuto:
+                    fireModeText.text = "Semi-Auto";
+                    fireModeText.color = Color.white;
+                    break;
+                case FireType.Burst:
+                    fireModeText.text = "Burst";
+                    fireModeText.color = Color.yellow;
+                    break;
+                case FireType.FullAuto:
+                    fireModeText.text = "Full-Auto";
+                    fireModeText.color = Color.red;
+                    break;
+                default:
+                    fireModeText.text = "Unknown";
+                    break;
+            }
+
+            UpdateCurrentAmmoUI();
+        }
+
+        private void UpdateCurrentAmmoUI()
+        {
+            if (ammoText != null && currentWeapon != null)
+            {
+                ammoText.text = $"{CurrentAmmo}/{currentWeapon.MaxAmmo}";
             }
         }
     }
