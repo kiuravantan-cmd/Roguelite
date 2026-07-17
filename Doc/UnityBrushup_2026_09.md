@@ -7,6 +7,7 @@
 3. **当てる快感（ヒットリアクション）**：敵が赤く点滅し、後ろに弾き飛ぶことで「攻撃が効いている！」という手触りを作る。
 4. **迷わせない配慮（武器UI）**：残弾数や射撃モード（SEMI/AUTO）を画面に出し、プレイヤーのストレスを無くす。
 5. **魔法のツール（DOTween）**：ツールを使い、たった1行でリロードUIを動かす。
+   
 これらを実装することで、ただのプログラムの塊が「触っていて気持ちいいゲーム」に生まれ変わります！
 
 ## 1.カメラ調整
@@ -1038,6 +1039,7 @@ namespace TPSRoguelite.InGame.Player
         {
             if (CurrentAmmo == 0) 
             {
+-               ReloadAsync().Forget();                
 +               Reload();
                 return;
             }
@@ -1065,6 +1067,7 @@ namespace TPSRoguelite.InGame.Player
             {
                 if (CurrentAmmo <= 0)
                 {
+-                   ReloadAsync().Forget();                    
 +                   Reload();
                     break;
                 }
@@ -1089,6 +1092,7 @@ namespace TPSRoguelite.InGame.Player
             {
                 if (CurrentAmmo <= 0) 
                 {
+-                   ReloadAsync().Forget();
 +                   Reload();
                     break;
                 }
@@ -1142,12 +1146,22 @@ namespace TPSRoguelite.InGame.Player
                 return;
             }
 
+-           ReloadAsync().Forget();
 +           Reload();
         }
 
+-       private async UniTask ReloadAsync()
 +       private void Reload()
         {
             isReloading = true;
+-           Debug.Log("リロード中");
+-
+-           await UniTask.Delay(TimeSpan.FromSeconds(currentWeapon.ReloadTime), cancellationToken: this.GetCancellationTokenOnDestroy());
+-
+-           CurrentAmmo = currentWeapon.MaxAmmo;
+-           UpdateCurrentAmmoUI();
+-           isReloading = false;
+-           Debug.Log("リロード完了");
 
 +           if (reloadUI != null)
 +           {
