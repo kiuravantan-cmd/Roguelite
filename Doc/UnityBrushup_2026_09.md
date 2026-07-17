@@ -1224,7 +1224,7 @@ namespace TPSRoguelite.InGame.Player
         }
 
 +       /// <summary>
-+       /// レベルアップの文字を数秒間だけ表示して自動で消す
++       /// リロードUIの更新
 +       /// </summary>
 +       private void UpdateReloadUI(float value)
 +       {
@@ -1235,7 +1235,7 @@ namespace TPSRoguelite.InGame.Player
 +       }
 +
 +       /// <summary>
-+       /// レベルアップの文字を数秒間だけ表示して自動で消す
++       /// リロード終了処理
 +       /// </summary>
 +       private void FinishReload()
 +       {
