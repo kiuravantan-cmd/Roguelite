@@ -6,6 +6,7 @@
 2. **撃つ快感（射撃エフェクト）**：弾が出た瞬間の火花（マズルフラッシュ）を作り、「撃った感触」を演出する。
 3. **当てる快感（ヒットリアクション）**：敵が赤く点滅し、後ろに弾き飛ぶことで「攻撃が効いている！」という手触りを作る。
 4. **迷わせない配慮（武器UI）**：残弾数や射撃モード（SEMI/AUTO）を画面に出し、プレイヤーのストレスを無くす。
+5. **魔法のツール（DOTween）**：ツールを使い、たった1行でリロードUIを動かす。
 これらを実装することで、ただのプログラムの塊が「触っていて気持ちいいゲーム」に生まれ変わります！
 
 ## 1.カメラ調整
@@ -912,5 +913,343 @@ namespace TPSRoguelite.InGame.Player
 1. Hierarchyから `Player` を選択する。
 2. `PlayerController` コンポーネントの `Ammo Text` と `Fire Mode Text` の枠に、先ほど作成したUIをそれぞれドラッグ＆ドロップで割り当てる。
 3. プレイして、装備した銃のタイプ（SEMIなど）が表示され、撃つ度に弾数が減っていれば完成です！
+
+## 5. リロード時間の可視化
+リロード中、「あと何秒で撃てるか」が分かるサークル画像と、「リロード中…」というテキストを作ります。<br>
+ここでは、アニメーションツール 「DOTween（ドゥートゥイーン）」 を導入し、面倒な計算をせずに「たった1行」でUIをアニメーションさせましょう！
+
+### 5-1. サークルUIの作成
+**【重要：2D Spriteパッケージの準備】** もし右クリックメニューに「Sprites > Circle」が見当たらない場合は、以下の手順で追加します。
+1. 上部メニューの `Window > Package Manager` を開きます。
+2. 左上を `Packages: Unity Registry` に変更し、右上の検索窓で `2D Sprite` を検索します。
+3. `2D Sprite` を選んで右下の `Install` を押します。
+
+**UIの階層（親子関係）を作って配置する** リロード中はサークルの下にテキストも一緒に出すため、全体をまとめる「親オブジェクト」を作ります。これを作っておくと、表示・非表示のプログラムがとても簡単になります。
+1. Projectウィンドウの `MyProject` に `Sprites` というフォルダを作成します。
+2. **今作ったSpritesフォルダ内で右クリック** ＞ `Create > 2D > Sprites > Circle` で真っ白な円画像を作ります。
+3. HierarchyのCanvasの中で右クリック ＞ `Create Empty` を選び、空のオブジェクトを作って名前を `ReloadUI` にします。（これが全体をまとめる親玉になります。画面の中央に配置してください）
+4. **今作った `ReloadUI` の上で右クリック** ＞ `UI > Image` を作成し、名前を `ReloadCircleImage` にします。
+5. `ReloadCircleImage` の `Source Image` に白円をセットし、`Image Type` を `Filled、Fill Method` を `Radial 360` にします。（`Fill Amount` を動かすと時計のように欠けるのがわかります）
+6. もう一度 `ReloadUI` の上で右クリック ＞ `UI > Text - TextMeshPro` を作成します。テキストの中身を **「リロード中…」** に書き換え、サークルの下になるように配置します。
+
+### 5-2. DOTweenのインストールと初期設定
+1. Asset Storeから `DOTween (HOTween v2)` をインポートします。
+2. インポートが終わると緑色のウィンドウが開きます。もし開かない場合は、上部メニューの `Tools > Demigiant > DOTween Utility Panel` を開いてください。
+3. そのウィンドウの中にある `Setup DOTween...` という緑色のボタンを押して、そのまま `Apply` を押します。これをやらないとエラーになります！
+
+### 5-3. 魔法の1行でアニメーションさせる！
+PlayerController にリロードUIの枠を追加し、リロード処理を書き換えます。
+**ファイル名： `PlayerController.cs`**
+``` diff
+using Core.Interface;
+using Core.MasterData;
+using Cysharp.Threading.Tasks;
+using System;
+using System.Threading;
+using TMPro;
+using TPSRoguelite.InGame.Enums;
+using UnityEngine;
+using UnityEngine.InputSystem;
++using UnityEngine.UI;
++using DG.Tweening;
+
+namespace TPSRoguelite.InGame.Player
+{
+
+    public class PlayerController : MonoBehaviour
+    {
+        // 変数省略
+
+        [Header("Weapon UI")]
+        [SerializeField] private TextMeshProUGUI fireModeText;
+        [SerializeField] private TextMeshProUGUI ammoText;
+
++       [Header("Reload UI")]
++
++       /// <summary>
++       /// リロード中のテキストと画像をまとめたオブジェクト
++       /// </summary>
++       [SerializeField] private GameObject reloadUI;
++
++       /// <summary>
++       /// リロード中、「あと何秒で撃てるか」が分かるサークル画像
++       /// </summary>
++       [SerializeField] private Image reloadCircleImage;
+
+        private WeaponDataRecord currentWeapon;
+
+        // 変数省略
+
+        private void Start ()
+        {
+            gameObject.SetActive(false);
+        }
+
+        public void Setup ()
+        {
+            currentWeapon = MasterDataAccessor.Instance.GetById<WeaponDataRecord>(1);
+            if (currentWeapon != null)
+            {
+                CurrentAmmo = currentWeapon.MaxAmmo;
+            }
+            else
+            {
+                Debug.LogError("currentWeaponが見つかりませんでした");
+            }
+
+            inputActions = new PlayerInputActions();
+            inputActions.Player.Fire.started += OnFire;
+            inputActions.Player.Fire.canceled += OnFire;
+            inputActions.Player.Reload.performed += OnReload;
+
+            if (UnityEngine.Camera.main != null)
+            {
+                mainCameraTransform = UnityEngine.Camera.main.transform;
+            }
+            else
+            {
+                Debug.LogError("Main Cameraが見つかりません。");
+            }
+
+            UpdateWeaponUI();
+
++           if (reloadUI != null)
++           {
++               reloadUI.SetActive(false);
++           }
+
+            gameObject.SetActive(true);
+        }
+
+        private void OnEnable ()
+        {
+            if (inputActions != null)
+            {
+                inputActions.Enable();
+            }
+        }
+
+        // 関数省略
+
+        /// <summary>
+        /// セミオートの射撃処理
+        /// </summary>
+        private async UniTaskVoid ShootSemiAutoAsync(CancellationToken token) 
+        {
+            if (CurrentAmmo == 0) 
+            {
++               Reload();
+                return;
+            }
+
+            canShoot = false;
+
+            CurrentAmmo--;
+            UpdateCurrentAmmoUI();
+            Debug.Log($"セミオートで撃った！弾数：{CurrentAmmo}");
+            Shoot();
+
+            await UniTask.Delay(System.TimeSpan.FromSeconds(currentWeapon.FireRate), cancellationToken: token);
+
+            canShoot = true;
+        }
+
+        /// <summary>
+        /// バーストの射撃処理
+        /// </summary>
+        private async UniTaskVoid ShootBurstAsync(CancellationToken token) 
+        {
+            canShoot = false;
+
+            for (int i = 0; i < 3; i++) 
+            {
+                if (CurrentAmmo <= 0)
+                {
++                   Reload();
+                    break;
+                }
+
+                CurrentAmmo--;
+                UpdateCurrentAmmoUI();
+                Shoot();
+                Debug.Log($"バースト！残弾数：{CurrentAmmo}");
+
+                await UniTask.Delay(TimeSpan.FromSeconds(currentWeapon.FireInteval), cancellationToken: token);
+            }
+
+            await UniTask.Delay(TimeSpan.FromSeconds(currentWeapon.FireRate), cancellationToken: token);
+            canShoot = true;
+        }
+
+        private async UniTaskVoid ShootFullAutoAsync(CancellationToken token)
+        {
+            canShoot = false;
+
+            while (!token.IsCancellationRequested) 
+            {
+                if (CurrentAmmo <= 0) 
+                {
++                   Reload();
+                    break;
+                }
+
+                CurrentAmmo--;
+                UpdateCurrentAmmoUI();
+                Debug.Log($"フルオート！残弾数：{CurrentAmmo}");
+                Shoot();
+
+                bool isCanceled = await UniTask.Delay(TimeSpan.FromSeconds(currentWeapon.FireInteval), cancellationToken: token).SuppressCancellationThrow();
+                if (isCanceled)
+                {
+                    break;
+                }
+            }
+
+            await UniTask.Delay(TimeSpan.FromSeconds(currentWeapon.FireRate), cancellationToken: this.GetCancellationTokenOnDestroy());
+
+            canShoot = true;
+        }
+
+        /// <summary>
+        /// 共通の射撃処理
+        /// </summary>
+        private void Shoot() 
+        {
+            if (muzzleFlash != null)
+            {
+                muzzleFlash.Play();
+            }
+
+            Ray ray = new Ray(mainCameraTransform.position, mainCameraTransform.forward);
+
+            // 光線に何かが当たったか判定
+            if (Physics.Raycast(ray, out RaycastHit hitInfo, ATTACK_RANGE)) {
+                Debug.Log($"{hitInfo.collider.name}に命中！");
+
+                // 当たった相手が IDamageable を持っているか確認
+                IDamageable target = hitInfo.collider.GetComponent<IDamageable>();
+
+                // ダメージを受ける性質を持ったオブジェクトであればダメージを与える
+                if (target != null) {
+                    target.TakeDamage(currentWeapon.AttackPower);
+                }
+            }
+        }
+
+        private void OnReload(InputAction.CallbackContext context)
+        {
+            if (isReloading || CurrentAmmo == currentWeapon.MaxAmmo) {
+                return;
+            }
+
++           Reload();
+        }
+
++       private void Reload()
+        {
+            isReloading = true;
+
++           if (reloadUI != null)
++           {
++               reloadUI.gameObject.SetActive(true);
++           }
++
++           if (reloadCircleImage != null)
++           {
++               reloadCircleImage.fillAmount = 0f;
++           }
++
++           DOVirtual.Float(0f, 1f, currentWeapon.ReloadTime, UpdateReloadUI).SetEase(Ease.Linear).OnComplete(FinishReload);
+        }
+
+        /// <summary>
+        /// レーザーポインターの描画
+        /// </summary>
+        private void DrawLaserPointer()
+        {
+            if (laserLineRenderer == null || weponOrigin == null || mainCameraTransform == null) 
+            {
+                return;
+            }
+
+            laserLineRenderer.SetPosition(0, weponOrigin.position);
+
+            Ray ray = new Ray(mainCameraTransform.position, mainCameraTransform.forward);
+            if (Physics.Raycast(ray, out RaycastHit hitInfo, LASER_MAX_DISTANCE))
+            {
+                laserLineRenderer.SetPosition(1, hitInfo.point);
+            }
+            else
+            {
+                laserLineRenderer.SetPosition(1, ray.GetPoint(LASER_MAX_DISTANCE));
+            }
+        }
+
+        private void UpdateFireModeUI ()
+        {
+            if (fireModeText == null || currentWeapon == null)
+            {
+                return;
+            }
+
+            FireType fireType = (FireType)currentWeapon.WeaponFireType;
+            switch (fireType)
+            {
+                case FireType.SemiAuto:
+                    fireModeText.text = "Semi-Auto";
+                    fireModeText.color = Color.white;
+                    break;
+                case FireType.Burst:
+                    fireModeText.text = "Burst";
+                    fireModeText.color = Color.yellow;
+                    break;
+                case FireType.FullAuto:
+                    fireModeText.text = "Full-Auto";
+                    fireModeText.color = Color.red;
+                    break;
+                default:
+                    fireModeText.text = "Unknown";
+                    break;
+            }
+
+            UpdateCurrentAmmoUI();
+        }
+
+        private void UpdateCurrentAmmoUI()
+        {
+            if (ammoText != null && currentWeapon != null)
+            {
+                ammoText.text = $"{CurrentAmmo}/{currentWeapon.MaxAmmo}";
+            }
+        }
+
++       /// <summary>
++       /// レベルアップの文字を数秒間だけ表示して自動で消す
++       /// </summary>
++       private void UpdateReloadUI(float value)
++       {
++           if (reloadCircleImage != null)
++           {
++               reloadCircleImage.fillAmount = value;
++           }
++       }
++
++       /// <summary>
++       /// レベルアップの文字を数秒間だけ表示して自動で消す
++       /// </summary>
++       private void FinishReload()
++       {
++           if (reloadUI != null)
++           {
++               reloadUI.SetActive(false);
++           }
++
++           CurrentAmmo = currentWeapon.MaxAmmo;
++           UpdateCurrentAmmoUI();
++           isReloading = false;
++       }
+    }
+}
+```
 
 **お疲れ様でした！ カメラ、エフェクト、リアクション、そしてUI。今日のアップデートで、あなたのゲームの手触りは劇的に良くなりました！**
