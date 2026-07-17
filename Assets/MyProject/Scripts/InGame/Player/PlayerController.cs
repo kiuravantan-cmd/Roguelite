@@ -8,6 +8,8 @@ using System.Threading;
 using TPSRoguelite.InGame.Enum;
 using Core.MasterData;
 using TMPro;
+using UnityEngine.UI;
+using DG.Tweening;
 
 namespace TPSRoguelite.InGame.Player {
 
@@ -63,6 +65,11 @@ namespace TPSRoguelite.InGame.Player {
         [SerializeField] private TextMeshProUGUI fireModeText;
 
         [SerializeField] private TextMeshProUGUI ammoText;
+
+        [Header("Relaod UI")]
+
+        [SerializeField] private GameObject reloadUI;
+        [SerializeField] private Image reloadCircleImage;
 
         /// <summary>
         /// 武器のデータ
@@ -140,6 +147,11 @@ namespace TPSRoguelite.InGame.Player {
             }
 
             UpdateFireModeUI();
+
+            if (reloadUI != null)
+            {
+                reloadUI.SetActive(false);
+            }
 
             gameObject.SetActive(true);
         }
@@ -251,7 +263,7 @@ namespace TPSRoguelite.InGame.Player {
         {
             if (CurrentAmmo == 0) 
             {
-                ReloadAsync().Forget();
+                Reload();
                 return;
             }
 
@@ -278,7 +290,7 @@ namespace TPSRoguelite.InGame.Player {
             {
                 if (CurrentAmmo <= 0)
                 {
-                    ReloadAsync().Forget();
+                    Reload();
                     break;
                 }
 
@@ -302,7 +314,7 @@ namespace TPSRoguelite.InGame.Player {
             {
                 if (CurrentAmmo <= 0) 
                 {
-                    ReloadAsync().Forget();
+                    Reload();
                     break;
                 }
 
@@ -355,20 +367,24 @@ namespace TPSRoguelite.InGame.Player {
                 return;
             }
 
-            ReloadAsync().Forget();
+            Reload();
         }
 
-        private async UniTask ReloadAsync()
+        private void Reload()
         {
             isReloading = true;
-            Debug.Log("リロード中");
 
-            await UniTask.Delay(TimeSpan.FromSeconds(currentWeapon.ReloadTime), cancellationToken: this.GetCancellationTokenOnDestroy());
+            if (reloadUI != null)
+            {
+                reloadUI.gameObject.SetActive(true);
+            }
 
-            CurrentAmmo = currentWeapon.MaxAmmo;
-            UpdateCurrentAmmoUI();
-            isReloading = false;
-            Debug.Log("リロード完了");
+            if (reloadCircleImage != null)
+            {
+                reloadCircleImage.fillAmount = 0f;
+            }
+
+            DOVirtual.Float(0f, 1f, currentWeapon.ReloadTime, UpdateReloadUI).SetEase(Ease.Linear).OnComplete(FinishReload);
         }
 
         /// <summary>
@@ -430,6 +446,32 @@ namespace TPSRoguelite.InGame.Player {
             {
                 ammoText.text = $"{CurrentAmmo}/{currentWeapon.MaxAmmo}";
             }
+        }
+
+        /// <summary>
+        /// リロードUIの更新
+        /// </summary>
+        private void UpdateReloadUI(float value)
+        {
+            if (reloadCircleImage != null)
+            {
+                reloadCircleImage.fillAmount = value;
+            }
+        }
+
+        /// <summary>
+        /// リロード完了時の処理
+        /// </summary>
+        private void FinishReload()
+        {
+            if (reloadUI != null)
+            {
+                reloadUI.SetActive(false);
+            }
+
+            CurrentAmmo = currentWeapon.MaxAmmo;
+            UpdateCurrentAmmoUI();
+            isReloading = false;
         }
     }
 }
