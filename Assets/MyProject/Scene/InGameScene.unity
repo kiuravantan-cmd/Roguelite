@@ -359,6 +359,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TPSRoguelite.InGame.Camera.CameraController
   target: {fileID: 871598434}
+  lookSensitivity: 0.2
+  minPitch: -10
+  maxPitch: 60
+  zoomSpeed: 5
+  targetDistance: -5
+  targetHeightOffset: 1.2
+  targetShoulderOffset: 0.8
 --- !u!114 &345161508
 MonoBehaviour:
   m_ObjectHideFlags: 0
