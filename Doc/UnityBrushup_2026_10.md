@@ -1,16 +1,16 @@
 # 第10週：吸い込む快感とレベルアップ！「成長」の手触りを極める
 
 ## 本日の目標
-今日は、ゲームの醍醐味である「成長」のシステムを作り、さらに「魔法のツール」を使って画面の演出を劇的に強化します！
+今日は、ゲームの醍醐味である「成長」のシステムを作り、ローグライクの面白さに近づけたいと思います！ さらに、先生が用意した「魔法のシェーダー」を使って、画面の演出をプロレベルに強化します。
 1. 吸い込む快感：近づくと「シュバッ！」と飛んでくる経験値オーブを作る。
 2. 成長のロジック：経験値ゲージとレベルアップのシステムを構築する。
-3. UIの魔術（グラデーション）：プログラムの力だけでUIを綺麗なグラデーションに染め上げる。
+3. UIの魔術（グラデーション）：マテリアルの力だけでUIを綺麗なグラデーションに染め上げる。
 
 ## 1. 経験値オーブを作ろう（マグネット吸引）
+ただ触れるだけではなく、近づくと自動でプレイヤーに吸い寄せられる気持ちいいオーブを作ります。<br>
+`Scripts/InGame/Item` フォルダを作成し、`ExperienceOrb.cs` を作ります。
 
-ただ触れるだけではなく、近づくと自動でプレイヤーに吸い寄せられる気持ちいいオーブを作ります。
-Scripts/InGame/Item フォルダを作成し、ExperienceOrb.cs を作ります。
-ファイル名： ExperienceOrb.cs
+**ファイル名： `ExperienceOrb.cs`**
 ``` cs
 using TPSRoguelite.InGame.Player;
 using UnityEngine;
@@ -107,16 +107,17 @@ namespace TPSRoguelite.InGame.Item
 }
 ```
 
-エディタでの作業手順
-1. Hierarchyウィンドウの何もない場所で右クリックし、3D Object > Sphere（球体）を作成します。
-2. 名前を ExperienceOrb に変更し、Inspectorの上部にある Transform の Scale をすべて 0.3 くらいに小さくします。（色が欲しい場合は黄色いマテリアルなどを作って適用してください）
-3. 今作った ExperienceOrb に、先ほど書いたスクリプト ExperienceOrb.cs をドラッグ＆ドロップでアタッチします。
-4. Inspectorにある Sphere Collider コンポーネントを探し、Is Trigger の左にあるチェックボックスに必ずチェックを入れてください。（入れないとプレイヤーにぶつかって弾き飛ばされてしまいます！）
-5. Projectウィンドウに Prefabs（または Items）フォルダを用意し、そこへ ExperienceOrb をドラッグ＆ドロップして Prefab（プレハブ）化 します。青い箱のアイコンになったら、Hierarchy上にある元のオーブは Delete キーで削除してOKです。
+**エディタでの作業**
+1. Hierarchyウィンドウの何もない場所で右クリックし、`3D Object > Sphere（球体）`を作成します。
+2. 名前を `ExperienceOrb` に変更し、Inspectorの上部にある `Transform` の `Scale` をすべて `0.3` くらいに小さくします。（色が欲しい場合は黄色いマテリアルなどを作って適用してください）
+3. 今作った `ExperienceOrb` に、先ほど書いたスクリプト `ExperienceOrb.cs` をドラッグ＆ドロップでアタッチします。
+4. Inspectorにある `Sphere Collider` コンポーネントを探し、`Is Trigger` の左にあるチェックボックスに必ずチェックを入れてください。（入れないとプレイヤーにぶつかって弾き飛ばされてしまいます！）
+5. Projectウィンドウに `Prefabs`（または Items）フォルダを用意し、そこへ `ExperienceOrb` をドラッグ＆ドロップして `Prefab（プレハブ）化` します。青い箱のアイコンになったら、Hierarchy上にある元のオーブは `Delete` キーで削除してOKです。
 
 ## 2. 敵からのドロップ処理
 敵が死んだときに、さっき作ったオーブを落とすようにします。
-ファイル名： EnemyState.cs
+
+**ファイル名： `EnemyState.cs`**
 ``` diff
 using System.Threading;
 using Cysharp.Threading.Tasks;
@@ -272,20 +273,21 @@ namespace TPSRoguelite.InGame.Enemy
     }
 }
 ```
-【エディタでの作業】 Enemyプレハブの Experience Orb Prefab 枠に、先ほど作ったオーブのプレハブをセットします。
+**エディタでの作業**<br>
+Enemyプレハブの `Experience Orb Prefab` 枠に、先ほど作ったオーブのプレハブをセットします。
 
 ## 3. プレイヤーの経験値とレベルアップ処理
 PlayerController.cs を開き、経験値の受け皿と、レベルアップの仕組みを追加します。
 
 ### 3-1. UIの配置
 まずは画面に経験値ゲージと文字を作ります。
-1. Hierarchyウィンドウにある Canvas の上で右クリックし、UI > Slider を作成します。名前を ExpSlider に変更します。
-2. ExpSlider を選択し、Inspectorにある Slider コンポーネントの Interactable のチェックを外します。（外さないと、ゲーム中にマウスでゲージを動かせてしまいます）
-3. さらに Canvas の上で右クリックし、UI > Text - TextMeshPro を作成します。名前を LevelUpText に変更します。
+1. Hierarchyウィンドウにある `Canvas` の上で右クリックし、`UI > Slider` を作成します。名前を `ExpSlider` に変更します。
+2. `ExpSlider` を選択し、Inspectorにある `Slider` コンポーネントの `Interactable` のチェックを外します。（外さないと、ゲーム中にマウスでゲージを動かせてしまいます）
+3. さらに `Canvas` の上で右クリックし、`UI > Text - TextMeshPro` を作成します。名前を `LevelUpText` に変更します。
 4. 画面の真ん中に大きく配置し、Inspectorでテキストの色を黄色などに、文字を「LEVEL UP!」に変更します。
 
 ### 3-2. 経験値の取得
-ファイル名： PlayerController.cs
+**ファイル名： `PlayerController.cs`**
 ``` diff
 using Core.Interface;
 using UnityEngine;
@@ -389,7 +391,8 @@ namespace TPSRoguelite.InGame.Player {
 ```
 
 ExperienceOrb.csに経験値を追加する処理を実装します。
-ファイル名： ExperienceOrb.cs
+
+**ファイル名： `ExperienceOrb.cs`**
 ``` diff
 using TPSRoguelite.InGame.Player;
 using UnityEngine;
@@ -489,7 +492,7 @@ namespace TPSRoguelite.InGame.Item
 ```
 
 ### 3-3. レベルアップ処理
-ファイル名： PlayerController.cs
+**ファイル名： `PlayerController.cs`**
 ``` diff
 using Core.Interface;
 using UnityEngine;
@@ -508,133 +511,7 @@ namespace TPSRoguelite.InGame.Player {
 
     public class PlayerController : MonoBehaviour
     {
-        /// <summary>
-        /// 移動速度
-        /// </summary>
-        private const float MOVE_SPEED = 5.0f;
-
-        /// <summary>
-        /// 回転速度
-        /// </summary>
-        private const float ROTATE_SPEED = 10f;
-
-        /// <summary>
-        /// レーザーポインターの描画距離
-        /// </summary>
-        private const float LASER_MAX_DISTANCE = 50f;
-
-        /// <summary>
-        /// 攻撃距離（射撃範囲）
-        /// </summary>
-        private const float ATTACK_RANGE = 50f;
-
-        /// <summary>
-        /// レベルアップ時のエフェクト表示時間
-        /// </summary>
-        private const float LEVEL_UP_EFFECT_DURATION = 2f;
-
-        /// <summary>
-        /// 物理演算コンポーネント
-        /// </summary>
-        [SerializeField] private Rigidbody rigidbody;
-
-        /// <summary>
-        /// 銃口のトランスフォーム
-        /// </summary>
-        [SerializeField] private Transform weponOrigin;
-
-        /// <summary>
-        /// レーザーポインターの描画コンポーネント
-        /// </summary>
-        [SerializeField] private LineRenderer laserLineRenderer;
-
-        /// <summary>
-        /// 武器のID（デフォルトは1）
-        /// </summary>
-        [SerializeField] private ulong weaponId = 1;
-
-        /// <summary>
-        /// マズルフラッシュ（銃口の火花）のエフェクト
-        /// </summary>
-        [SerializeField] private ParticleSystem muzzleFlash;
-
-        [Header("Weapon UI")]
-
-        [SerializeField] private TextMeshProUGUI fireModeText;
-
-        [SerializeField] private TextMeshProUGUI ammoText;
-
-        [Header("Relaod UI")]
-
-        [SerializeField] private GameObject reloadUI;
-        [SerializeField] private Image reloadCircleImage;
-
-        [Header("経験値＆レベルアップのUI")]
-
-        /// <summary>
-        /// 経験値を表示するスライダーUI
-        /// </summary>
-        [SerializeField] private Slider expSlider;
-
-        /// <summary>
-        /// レベルアップ時に表示するテキストUI
-        /// </summary>
-        [SerializeField] private TextMeshProUGUI levelUpText;
-
-        /// <summary>
-        /// レベルアップ時のエフェクト
-        /// </summary>
-        [SerializeField] private ParticleSystem levelUpEffect;
-
-        /// <summary>
-        /// 武器のデータ
-        /// </summary>
-        private WeaponDataRecord currentWeapon;
-
-        /// <summary>
-        /// 自動生成されたInputクラス
-        /// </summary>
-        private PlayerInputActions inputActions;
-
-        /// <summary>
-        /// 入力方向
-        /// </summary>
-        private Vector2 moveInput = Vector2.zero;
-
-        /// <summary>
-        /// 移動方向のベクトル
-        /// </summary>
-        private Vector3 moveDirection;
-
-        /// <summary>
-        /// カメラのトランスフォーム
-        /// </summary>
-        private Transform mainCameraTransform;
-
-        /// <summary>
-        /// リロードしているか
-        /// </summary>
-        private bool isReloading;
-
-        /// <summary>
-        /// 射撃可能か
-        /// </summary>
-        private bool canShoot = true;
-
-        /// <summary>
-        /// 射撃のキャンセルトークン
-        /// </summary>
-        private CancellationTokenSource fireCts;
-
-        /// <summary>
-        /// 次のレベルに必要な経験値
-        /// </summary>
-        private int RequiredExp => CurrentLevel * 5; // 例: レベル1なら5、レベル2なら10、レベル3なら15...
-
-        /// <summary>
-        /// 外部（アニメーションやUIなど）に現在の速度を教えるために保持するVelocity
-        /// </summary>
-        public Vector3 CurrentVelocity { get; private set; }
+        // 変数省略
 
         /// <summary>
         /// 現在の弾数
@@ -646,12 +523,13 @@ namespace TPSRoguelite.InGame.Player {
         /// </summary>
         public int CurrentExp { get; private set; }
 
-        /// <summary>
-        /// 現在のレベル
-        /// </summary>
-        public int CurrentLevel { get; private set; } = 1;
++       /// <summary>
++       /// 現在のレベル
++       /// </summary>
++       public int CurrentLevel { get; private set; } = 1;
 
-        private void Awake() {
+        private void Awake()
+        {
             gameObject.SetActive(false);
         }
 
@@ -659,23 +537,25 @@ namespace TPSRoguelite.InGame.Player {
         {
             currentWeapon = MasterDataAccessor.Instance.GetById<WeaponDataRecord>(weaponId);
 
-            if (currentWeapon != null) {
+            if (currentWeapon != null)
+            {
                 CurrentAmmo = currentWeapon.MaxAmmo;
-            } else {
+            }
+            else
+            {
                 Debug.LogError("WeaponDataがありません。");
             }
 
             CurrentExp = 0;
-            CurrentLevel = 1;
-
-            if (levelUpText != null)
-            {
-                // レベルアップ時のテキストを非表示にする
-                levelUpText.enabled = false;
-            }
-
-            UpdateExpUI();
-
++           CurrentLevel = 1;
++
++           if (levelUpText != null)
++           {
++               // レベルアップ時のテキストを非表示にする
++               levelUpText.enabled = false;
++           }
++
++           UpdateExpUI();
 
             inputActions = new PlayerInputActions();
             inputActions.Player.Fire.performed += OnFire; // 押し続けていると呼ばれる
@@ -716,306 +596,6 @@ namespace TPSRoguelite.InGame.Player {
             Move();
         }
 
-
-        private void Move()
-        {
-            if (rigidbody == null || mainCameraTransform == null)
-            {
-                return;
-            }
-
-            // カメラの水平方向の前方を計算 (入力の有無に関わらず常に計算する)
-            Vector3 cameraForward = mainCameraTransform.forward;
-            cameraForward.y = 0f;
-            cameraForward.Normalize();
-
-            // キャラクターを常に「カメラの向いている方向」へ振り向かせる
-            if (cameraForward != Vector3.zero)
-            {
-                Quaternion targetRotation = Quaternion.LookRotation(cameraForward);
-                rigidbody.rotation = Quaternion.Slerp(rigidbody.rotation, targetRotation, ROTATE_SPEED * Time.fixedDeltaTime);
-            }
-
-            // 入力がない場合はピタッと止める
-            if (moveInput == Vector2.zero) {
-                rigidbody.linearVelocity = new Vector3(0f, rigidbody.linearVelocity.y, 0f);
-                CurrentVelocity = Vector3.zero;
-                return;
-            }
-
-            // カメラ基準の計算に変更
-            Vector3 cameraRight = mainCameraTransform.right;
-            cameraRight.y = 0f;
-            cameraRight.Normalize();
-
-            Vector3 moveDirection = (cameraForward * moveInput.y + cameraRight * moveInput.x).normalized;
-
-            // 物理演算で移動させる
-            Vector3 targetVelocity = moveDirection * MOVE_SPEED;
-            rigidbody.linearVelocity = new Vector3(targetVelocity.x, rigidbody.linearVelocity.y, targetVelocity.z);
-
-            // 外部（アニメーションやUIなど）に現在の速度を教えるためにプロパティを更新
-            CurrentVelocity = rigidbody.linearVelocity;
-        }
-
-        private void OnFire(InputAction.CallbackContext context)
-        {
-            if (context.performed) 
-            {
-                if (!canShoot || isReloading || currentWeapon == null) 
-                {
-                    return;
-                }
-
-                fireCts = new CancellationTokenSource();
-                var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(fireCts.Token, this.GetCancellationTokenOnDestroy());
-                
-                switch ((FireType)currentWeapon.WeaponFireType)
-                {
-                    case Enum.FireType.SemiAuto:
-                        ShootSemiAutoAsync(this.GetCancellationTokenOnDestroy()).Forget();
-                        break;
-
-                    case Enum.FireType.Burst:
-                        ShootBurstAsync(this.GetCancellationTokenOnDestroy()).Forget();
-                        break;
-
-                    case Enum.FireType.FullAuto:
-                        ShootFullAutoAsync(linkedCts.Token).Forget();
-                        break;
-
-                    default:
-                        Debug.LogWarning($"割り当てていない射撃タイプがあります。{currentWeapon.WeaponFireType}");
-                        break;
-                }
-            }
-
-            if (context.canceled) 
-            {
-                fireCts?.Cancel();
-                fireCts?.Dispose();
-                fireCts = null;
-            }
-        }
-
-        /// <summary>
-        /// セミオートの射撃処理
-        /// </summary>
-        private async UniTaskVoid ShootSemiAutoAsync(CancellationToken token) 
-        {
-            if (CurrentAmmo == 0) 
-            {
-                Reload();
-                return;
-            }
-
-            canShoot = false;
-
-            CurrentAmmo--;
-            UpdateCurrentAmmoUI();
-            Debug.Log($"セミオートで撃った！弾数：{CurrentAmmo}");
-            Shoot();
-
-            await UniTask.Delay(System.TimeSpan.FromSeconds(currentWeapon.FireRate), cancellationToken: token);
-
-            canShoot = true;
-        }
-
-        /// <summary>
-        /// バーストの射撃処理
-        /// </summary>
-        private async UniTaskVoid ShootBurstAsync(CancellationToken token) 
-        {
-            canShoot = false;
-
-            for (int i = 0; i < 3; i++) 
-            {
-                if (CurrentAmmo <= 0)
-                {
-                    Reload();
-                    break;
-                }
-
-                CurrentAmmo--;
-                UpdateCurrentAmmoUI();
-                Shoot();
-                Debug.Log($"バースト！残弾数：{CurrentAmmo}");
-
-                await UniTask.Delay(TimeSpan.FromSeconds(currentWeapon.FireInteval), cancellationToken: token);
-            }
-
-            await UniTask.Delay(TimeSpan.FromSeconds(currentWeapon.FireRate), cancellationToken: token);
-            canShoot = true;
-        }
-
-        private async UniTaskVoid ShootFullAutoAsync(CancellationToken token)
-        {
-            canShoot = false;
-
-            while (!token.IsCancellationRequested) 
-            {
-                if (CurrentAmmo <= 0) 
-                {
-                    Reload();
-                    break;
-                }
-
-                CurrentAmmo--;
-                UpdateCurrentAmmoUI();
-                Debug.Log($"フルオート！残弾数：{CurrentAmmo}");
-                Shoot();
-
-                bool isCanceled = await UniTask.Delay(TimeSpan.FromSeconds(currentWeapon.FireInteval), cancellationToken: token).SuppressCancellationThrow();
-                if (isCanceled)
-                {
-                    break;
-                }
-            }
-
-            await UniTask.Delay(TimeSpan.FromSeconds(currentWeapon.FireRate), cancellationToken: this.GetCancellationTokenOnDestroy());
-
-            canShoot = true;
-        }
-
-        /// <summary>
-        /// 共通の射撃処理
-        /// </summary>
-        private void Shoot() 
-        {
-            if (muzzleFlash != null)
-            {
-                muzzleFlash.Play();
-            }
-
-            Ray ray = new Ray(mainCameraTransform.position, mainCameraTransform.forward);
-
-            // 光線に何かが当たったか判定
-            if (Physics.Raycast(ray, out RaycastHit hitInfo, ATTACK_RANGE)) {
-                Debug.Log($"{hitInfo.collider.name}に命中！");
-
-                // 当たった相手が IDamageable を持っているか確認
-                IDamageable target = hitInfo.collider.GetComponent<IDamageable>();
-
-                // ダメージを受ける性質を持ったオブジェクトであればダメージを与える
-                if (target != null) {
-                    target.TakeDamage(currentWeapon.AttackPower);
-                }
-            }
-        }
-
-        private void OnReload(InputAction.CallbackContext context)
-        {
-            if (isReloading || CurrentAmmo == currentWeapon.MaxAmmo) {
-                return;
-            }
-
-            Reload();
-        }
-
-        private void Reload()
-        {
-            isReloading = true;
-
-            if (reloadUI != null)
-            {
-                reloadUI.gameObject.SetActive(true);
-            }
-
-            if (reloadCircleImage != null)
-            {
-                reloadCircleImage.fillAmount = 0f;
-            }
-
-            DOVirtual.Float(0f, 1f, currentWeapon.ReloadTime, UpdateReloadUI).SetEase(Ease.Linear).OnComplete(FinishReload);
-        }
-
-        /// <summary>
-        /// レーザーポインターの描画
-        /// </summary>
-        private void DrawLaserPointer()
-        {
-            if (laserLineRenderer == null || weponOrigin == null || mainCameraTransform == null) 
-            {
-                return;
-            }
-
-            laserLineRenderer.SetPosition(0, weponOrigin.position);
-
-            Ray ray = new Ray(mainCameraTransform.position, mainCameraTransform.forward);
-            if (Physics.Raycast(ray, out RaycastHit hitInfo, LASER_MAX_DISTANCE))
-            {
-                laserLineRenderer.SetPosition(1, hitInfo.point);
-            }
-            else
-            {
-                laserLineRenderer.SetPosition(1, ray.GetPoint(LASER_MAX_DISTANCE));
-            }
-        }
-
-        private void UpdateFireModeUI ()
-        {
-            if (fireModeText == null || currentWeapon == null)
-            {
-                return;
-            }
-
-            FireType fireType = (FireType)currentWeapon.WeaponFireType;
-            switch (fireType)
-            {
-                case FireType.SemiAuto:
-                    fireModeText.text = "Semi-Auto";
-                    fireModeText.color = Color.white;
-                    break;
-                case FireType.Burst:
-                    fireModeText.text = "Burst";
-                    fireModeText.color = Color.yellow;
-                    break;
-                case FireType.FullAuto:
-                    fireModeText.text = "Full-Auto";
-                    fireModeText.color = Color.red;
-                    break;
-                default:
-                    fireModeText.text = "Unknown";
-                    break;
-            }
-
-            UpdateCurrentAmmoUI();
-        }
-
-        private void UpdateCurrentAmmoUI()
-        {
-            if (ammoText != null && currentWeapon != null)
-            {
-                ammoText.text = $"{CurrentAmmo}/{currentWeapon.MaxAmmo}";
-            }
-        }
-
-        /// <summary>
-        /// リロードUIの更新
-        /// </summary>
-        private void UpdateReloadUI(float value)
-        {
-            if (reloadCircleImage != null)
-            {
-                reloadCircleImage.fillAmount = value;
-            }
-        }
-
-        /// <summary>
-        /// リロード完了時の処理
-        /// </summary>
-        private void FinishReload()
-        {
-            if (reloadUI != null)
-            {
-                reloadUI.SetActive(false);
-            }
-
-            CurrentAmmo = currentWeapon.MaxAmmo;
-            UpdateCurrentAmmoUI();
-            isReloading = false;
-        }
-
         /// <summary>
         /// 経験値を追加する
         /// </summary>
@@ -1024,82 +604,159 @@ namespace TPSRoguelite.InGame.Player {
             CurrentExp += amount;
             Debug.Log($"経験値を{amount}獲得！現在の経験値: {CurrentExp}");
 
-            // レベルアップ判定
-            if (CurrentExp >= RequiredExp)
-            {
-                LevelUp();
-            }
-
-            // UIゲージの長さを更新
-            UpdateExpUI();
++           // レベルアップ判定
++           if (CurrentExp >= RequiredExp)
++           {
++               LevelUp();
++           }
++
++           // UIゲージの長さを更新
++           UpdateExpUI();
         }
 
-        /// <summary>
-        /// レベルアップ処理
-        /// </summary>
-        private void LevelUp()
++       /// <summary>
++       /// レベルアップ処理
++       /// </summary>
++       private void LevelUp()
++       {
++           CurrentLevel++;
++
++           // 余った経験値を消さずに、次のレベルに持ち越す
++           CurrentExp -= RequiredExp;
++
++           Debug.Log($"レベルアップ！現在のレベル: {CurrentLevel}, 次のレベルまでの経験値: {RequiredExp - CurrentExp}");
++
++           // レベルアップのエフェクトを再生
++           if (levelUpEffect != null)
++           {
++               levelUpEffect.Play();
++           }
++
++           ShowLevelUpTextAsync().Forget();
++       }
++
++       /// <summary>
++       /// UIゲージの長さを更新する
++       /// </summary>
++       private void UpdateExpUI()
++       {
++           if (expSlider != null)
++           {
++               // 0.0（空） ～ 1.0（満タン） の割合を計算してSliderにセットする
++               expSlider.value = (float)CurrentExp / RequiredExp;
++           }
++       }
++
++       /// <summary>
++       /// レベルアップの文字を表示する非同期処理
++       /// </summary>
++       private async UniTaskVoid ShowLevelUpTextAsync()
++       {
++           if (levelUpText == null)
++           {
++               return;
++           }
++
++           levelUpText.enabled = true;
++           levelUpText.SetText($"Level Up!\n<size=50%>Lv.{CurrentLevel}</size>");
++
++           // 2秒間表示した後に非表示にする
++           await UniTask.Delay(TimeSpan.FromSeconds(LEVEL_UP_EFFECT_DURATION), cancellationToken: this.GetCancellationTokenOnDestroy());
++
++           levelUpText.enabled = false;
++       }
+    }
+}
+```
+**エディタでの作業**
+1. Hierarchyウィンドウの `Player` をクリックして選択します。
+2. Inspectorウィンドウを下へスクロールし、`PlayerController` コンポーネントに追加された `Exp Slider` と `Level Up Text` の枠を見つけます。
+3. その2つの枠に、先ほどCanvasの中に作ったUIをそれぞれドラッグ＆ドロップで割り当てます。
+
+## 4. 演出強化：自作シェーダーで作るグラデーションUI
+経験値バーを綺麗なグラデーションにしたいですが、画像素材はありません。 そこで、UI専用の「シェーダー（絵の具）」と「マテリアル（パレット）」を自作して色を塗ります！
+### 4-1. シェーダー（Shader）を作成する
+シェーダーとは、グラフィックボードに「どうやって色を塗るか」を直接命令する魔法のコードです。C#とは全く違う言葉で書かれています。
+1. Projectウィンドウで右クリック ＞ `Create > Shader > Standard Surface Shader` を作成します。
+2. 名前を `UIGradient` に変更して開きます。
+3. 中に書かれているコードを全て消して、先生が用意した以下のコードをまるごとコピー＆ペーストして保存します。
+   (講師フォルダにもコードがあります)
+```
+Shader "Custom/UIGradient"
+{
+    Properties
+    {
+        _TopColor ("Top Color", Color) = (1,1,1,1)
+        _BottomColor ("Bottom Color", Color) = (1,1,1,1)
+        _MainTex ("Texture", 2D) = "white" {}
+    }
+    SubShader
+    {
+        // UI用の透過や描画順の設定
+        Tags { "RenderType"="Transparent" "Queue"="Transparent" "PreviewType"="Plane" }
+        Blend SrcAlpha OneMinusSrcAlpha
+        ZWrite Off
+        Cull Off
+
+        Pass
         {
-            CurrentLevel++;
+            CGPROGRAM
+            #pragma vertex vert
+            #pragma fragment frag
+            #include "UnityCG.cginc"
 
-            // 余った経験値を消さずに、次のレベルに持ち越す
-            CurrentExp -= RequiredExp;
-
-            Debug.Log($"レベルアップ！現在のレベル: {CurrentLevel}, 次のレベルまでの経験値: {RequiredExp - CurrentExp}");
-
-            // レベルアップのエフェクトを再生
-            if (levelUpEffect != null)
+            struct appdata_t
             {
-                levelUpEffect.Play();
+                float4 vertex : POSITION;
+                float2 uv : TEXCOORD0;
+                float4 color : COLOR;
+            };
+
+            struct v2f
+            {
+                float4 vertex : SV_POSITION;
+                float2 uv : TEXCOORD0;
+                float4 color : COLOR;
+            };
+
+            float4 _TopColor;
+            float4 _BottomColor;
+            sampler2D _MainTex;
+
+            v2f vert (appdata_t v)
+            {
+                v2f o;
+                o.vertex = UnityObjectToClipPos(v.vertex);
+                o.uv = v.uv;
+                
+                // UVのY座標（0.0 〜 1.0）を使って、下と上の色を混ぜ合わせる
+                float4 gradColor = lerp(_BottomColor, _TopColor, v.uv.y);
+                
+                // 元のUIの色にグラデーション色を掛け合わせる
+                o.color = v.color * gradColor;
+                
+                return o;
             }
 
-            ShowLevelUpTextAsync().Forget();
-        }
-
-        /// <summary>
-        /// UIゲージの長さを更新する
-        /// </summary>
-        private void UpdateExpUI()
-        {
-            if (expSlider != null)
+            fixed4 frag (v2f i) : SV_Target
             {
-                // 0.0（空） ～ 1.0（満タン） の割合を計算してSliderにセットする
-                expSlider.value = (float)CurrentExp / RequiredExp;
+                // テクスチャの色と計算した色を最終出力する
+                fixed4 col = tex2D(_MainTex, i.uv) * i.color;
+                return col;
             }
-        }
-
-        /// <summary>
-        /// レベルアップの文字を表示する非同期処理
-        /// </summary>
-        private async UniTaskVoid ShowLevelUpTextAsync()
-        {
-            if (levelUpText == null)
-            {
-                return;
-            }
-
-            levelUpText.enabled = true;
-            levelUpText.SetText($"Level Up!\n<size=50%>Lv.{CurrentLevel}</size>");
-
-            // 2秒間表示した後に非表示にする
-            await UniTask.Delay(TimeSpan.FromSeconds(LEVEL_UP_EFFECT_DURATION), cancellationToken: this.GetCancellationTokenOnDestroy());
-
-            levelUpText.enabled = false;
+            ENDCG
         }
     }
 }
 ```
-【エディタでの作業手順】
-1. Hierarchyウィンドウの Player をクリックして選択します。
-2. Inspectorウィンドウを下へスクロールし、PlayerController コンポーネントに追加された Exp Slider と Level Up Text の枠を見つけます。
-3. その2つの枠に、先ほどCanvasの中に作ったUIをそれぞれドラッグ＆ドロップで割り当てます。
 
-## 4. 演出強化①：素材不要！プログラムで作るグラデーションUI
-経験値バーを綺麗なグラデーションにしたいですが、画像素材がありません。
-そこで、UIの頂点色をプログラムで塗り替える魔法のスクリプトを作ります！
-Scripts/InGame/UI フォルダを作成し、UIGradient.cs を作ります。
-ファイル名： UIGradient.cs
-``` cs
-```
-【エディタでの作業】
-Hierarchyで経験値Sliderの中の Fill Area > Fill を選択します。
-今作った UIGradient.cs をアタッチし、Top Color と Bottom Color を好きな色（黄色とオレンジなど）に変更します。これだけでグラデーションになります！
+### 4-2. マテリアル（Material）を作成して適用する
+シェーダー（絵の具）ができたら、それを使うためのマテリアル（パレット）を作ります。
+1. Projectウィンドウで右クリック ＞ `Create > Material` を作成し、名前を `GradientMaterial` にします。
+2. 作成したマテリアルをクリックし、Inspectorの一番上にある `Shader` のプルダウンを開きます。
+3. リストの中から `Custom > UIGradient` を選びます。
+4. すると、Inspectorに `Top Color` と `Bottom Color` という項目が現れるので、好きな色（黄色とオレンジなど）を設定します。
+5. Hierarchyで経験値Sliderの中の `Fill Area > Fill` を選択します。
+6. Inspectorの `Image` コンポーネントにある `Material` の枠に、今作った `GradientMaterial` をドラッグ＆ドロップします。
+   
+これだけで、経験値バーが綺麗なグラデーションに変わります！ プレイボタンを押して、大量のオーブを吸い込む快感とレベルアップの達成感を味わってみましょう！
