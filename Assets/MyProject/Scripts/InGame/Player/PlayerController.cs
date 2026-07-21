@@ -36,6 +36,11 @@ namespace TPSRoguelite.InGame.Player {
         private const float ATTACK_RANGE = 50f;
 
         /// <summary>
+        /// レベルアップ時のエフェクト表示時間
+        /// </summary>
+        private const float LEVEL_UP_EFFECT_DURATION = 2f;
+
+        /// <summary>
         /// 物理演算コンポーネント
         /// </summary>
         [SerializeField] private Rigidbody rigidbody;
@@ -70,6 +75,23 @@ namespace TPSRoguelite.InGame.Player {
 
         [SerializeField] private GameObject reloadUI;
         [SerializeField] private Image reloadCircleImage;
+
+        [Header("経験値＆レベルアップのUI")]
+
+        /// <summary>
+        /// 経験値を表示するスライダーUI
+        /// </summary>
+        [SerializeField] private Slider expSlider;
+
+        /// <summary>
+        /// レベルアップ時に表示するテキストUI
+        /// </summary>
+        [SerializeField] private TextMeshProUGUI levelUpText;
+
+        /// <summary>
+        /// レベルアップ時のエフェクト
+        /// </summary>
+        [SerializeField] private ParticleSystem levelUpEffect;
 
         /// <summary>
         /// 武器のデータ
@@ -112,6 +134,11 @@ namespace TPSRoguelite.InGame.Player {
         private CancellationTokenSource fireCts;
 
         /// <summary>
+        /// 次のレベルに必要な経験値
+        /// </summary>
+        private int RequiredExp => CurrentLevel * 5; // 例: レベル1なら5、レベル2なら10、レベル3なら15...
+
+        /// <summary>
         /// 外部（アニメーションやUIなど）に現在の速度を教えるために保持するVelocity
         /// </summary>
         public Vector3 CurrentVelocity { get; private set; }
@@ -120,6 +147,16 @@ namespace TPSRoguelite.InGame.Player {
         /// 現在の弾数
         /// </summary>
         public int CurrentAmmo { get; private set; }
+
+        /// <summary>
+        /// 現在の経験値
+        /// </summary>
+        public int CurrentExp { get; private set; }
+
+        /// <summary>
+        /// 現在のレベル
+        /// </summary>
+        public int CurrentLevel { get; private set; } = 1;
 
         private void Awake() {
             gameObject.SetActive(false);
@@ -134,6 +171,18 @@ namespace TPSRoguelite.InGame.Player {
             } else {
                 Debug.LogError("WeaponDataがありません。");
             }
+
+            CurrentExp = 0;
+            CurrentLevel = 1;
+
+            if (levelUpText != null)
+            {
+                // レベルアップ時のテキストを非表示にする
+                levelUpText.enabled = false;
+            }
+
+            UpdateExpUI();
+
 
             inputActions = new PlayerInputActions();
             inputActions.Player.Fire.performed += OnFire; // 押し続けていると呼ばれる
@@ -472,6 +521,76 @@ namespace TPSRoguelite.InGame.Player {
             CurrentAmmo = currentWeapon.MaxAmmo;
             UpdateCurrentAmmoUI();
             isReloading = false;
+        }
+
+        /// <summary>
+        /// 経験値を追加する
+        /// </summary>
+        public void AddExperience(int amount)
+        {
+            CurrentExp += amount;
+            Debug.Log($"経験値を{amount}獲得！現在の経験値: {CurrentExp}");
+
+            // レベルアップ判定
+            if (CurrentExp >= RequiredExp)
+            {
+                LevelUp();
+            }
+
+            // UIゲージの長さを更新
+            UpdateExpUI();
+        }
+
+        /// <summary>
+        /// レベルアップ処理
+        /// </summary>
+        private void LevelUp()
+        {
+            CurrentLevel++;
+
+            // 余った経験値を消さずに、次のレベルに持ち越す
+            CurrentExp -= RequiredExp;
+
+            Debug.Log($"レベルアップ！現在のレベル: {CurrentLevel}, 次のレベルまでの経験値: {RequiredExp - CurrentExp}");
+
+            // レベルアップのエフェクトを再生
+            if (levelUpEffect != null)
+            {
+                levelUpEffect.Play();
+            }
+
+            ShowLevelUpTextAsync().Forget();
+        }
+
+        /// <summary>
+        /// UIゲージの長さを更新する
+        /// </summary>
+        private void UpdateExpUI()
+        {
+            if (expSlider != null)
+            {
+                // 0.0（空） ～ 1.0（満タン） の割合を計算してSliderにセットする
+                expSlider.value = (float)CurrentExp / RequiredExp;
+            }
+        }
+
+        /// <summary>
+        /// レベルアップの文字を表示する非同期処理
+        /// </summary>
+        private async UniTaskVoid ShowLevelUpTextAsync()
+        {
+            if (levelUpText == null)
+            {
+                return;
+            }
+
+            levelUpText.enabled = true;
+            levelUpText.SetText($"Level Up!\n<size=50%>Lv.{CurrentLevel}</size>");
+
+            // 2秒間表示した後に非表示にする
+            await UniTask.Delay(TimeSpan.FromSeconds(LEVEL_UP_EFFECT_DURATION), cancellationToken: this.GetCancellationTokenOnDestroy());
+
+            levelUpText.enabled = false;
         }
     }
 }

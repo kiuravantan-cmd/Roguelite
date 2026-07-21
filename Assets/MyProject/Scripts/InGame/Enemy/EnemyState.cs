@@ -16,9 +16,21 @@ namespace TPSRoguelite.InGame.Enemy
         private const float FLASH_DURATION = 0.1f;
 
         /// <summary>
+        /// オーブのドロップ位置の高さのオフセット
+        /// </summary>
+        private const float ORB_DROP_HEIGHT_OFFSET = 0.5f;
+
+        /// <summary>
         /// キャラクターのレンダラー
         /// </summary>
         [SerializeField] private Renderer[] modelRenderers;
+
+        [Header("ドロップアイテム")]
+
+        /// <summary>
+        /// ドロップするオーブ
+        /// </summary>
+        [SerializeField] private GameObject experienceOrbPrefab;
 
         /// <summary>
         /// キャラクターの元々の色
@@ -105,6 +117,14 @@ namespace TPSRoguelite.InGame.Enemy
         private void Die() 
         {
             Debug.Log($"{EnemyDataAsset.EnemyName}を倒しました");
+
+            // 経験値オーブをドロップする
+            if (experienceOrbPrefab != null)
+            {
+                Vector3 spawnPosition = transform.position + Vector3.up * ORB_DROP_HEIGHT_OFFSET;
+                Instantiate(experienceOrbPrefab, spawnPosition, Quaternion.identity);
+            }
+
             gameObject.SetActive(false);
             OnReturnToPoolAction?.Invoke(this);
         }
