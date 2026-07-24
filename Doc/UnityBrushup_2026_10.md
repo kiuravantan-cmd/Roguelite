@@ -513,6 +513,30 @@ namespace TPSRoguelite.InGame.Player {
     {
         // 変数省略
 
+        [Header("Relaod UI")]
+
+        [SerializeField] private GameObject reloadUI;
+        [SerializeField] private Image reloadCircleImage;
++
++       [Header("経験値＆レベルアップのUI")]
++
++       /// <summary>
++       /// 経験値を表示するスライダーUI
++       /// </summary>
++       [SerializeField] private Slider expSlider;
++
++       /// <summary>
++       /// レベルアップ時に表示するテキストUI
++       /// </summary>
++       [SerializeField] private TextMeshProUGUI levelUpText;
++
++       /// <summary>
++       /// レベルアップ時のエフェクト
++       /// </summary>
++       [SerializeField] private ParticleSystem levelUpEffect;
+
+        // 変数省略
+
         /// <summary>
         /// 現在の弾数
         /// </summary>
