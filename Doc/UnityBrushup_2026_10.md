@@ -492,6 +492,10 @@ namespace TPSRoguelite.InGame.Item
 ```
 
 ### 3-3. レベルアップ処理
+まずは、レベルアップをしたときにエフェクトを出したいので、そのエフェクトを作成します。
+1. 講師フォルダから `LevelUpEffect` というアセットがあるので、それを自分の好きなフォルダにコピペしてください。
+2. Projectウィンドウにあるそのアセットを、Hierarchyの `Player`にドラッグ＆ドロップして子オブジェクトにする。
+
 **ファイル名： `PlayerController.cs`**
 ``` diff
 using Core.Interface;
@@ -696,6 +700,8 @@ namespace TPSRoguelite.InGame.Player {
 1. Hierarchyウィンドウの `Player` をクリックして選択します。
 2. Inspectorウィンドウを下へスクロールし、`PlayerController` コンポーネントに追加された `Exp Slider` と `Level Up Text` の枠を見つけます。
 3. その2つの枠に、先ほどCanvasの中に作ったUIをそれぞれドラッグ＆ドロップで割り当てます。
+4. Projectウィンドウにあるそのアセットを、Projectウィンドウの `Player.prefab` にドラッグ＆ドロップして子オブジェクトにします。
+5. Hierarchyの `Player` を選択し、`PlayerController` コンポーネントにある `Muzzle Flash` の枠に、今配置したエフェクトをセットします。
 
 ## 4. 演出強化：自作シェーダーで作るグラデーションUI
 経験値バーを綺麗なグラデーションにしたいですが、画像素材はありません。 そこで、UI専用の「シェーダー（絵の具）」と「マテリアル（パレット）」を自作して色を塗ります！
