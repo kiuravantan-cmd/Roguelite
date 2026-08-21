@@ -1,15 +1,15 @@
 using Core.Interface;
-using UnityEngine;
-using UnityEngine.EventSystems;
-using UnityEngine.InputSystem;
+using Core.MasterData;
 using Cysharp.Threading.Tasks;
+using DG.Tweening;
 using System;
 using System.Threading;
-using TPSRoguelite.InGame.Enum;
-using Core.MasterData;
 using TMPro;
+using TPSRoguelite.InGame.Enum;
+using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UI;
-using DG.Tweening;
+using TPSRoguelite.InGame.Manager;
 
 namespace TPSRoguelite.InGame.Player {
 
@@ -133,10 +133,23 @@ namespace TPSRoguelite.InGame.Player {
         /// </summary>
         private CancellationTokenSource fireCts;
 
+        // --- スキルによる強化倍率（バフ） ---
+        private float moveSpeedBuff = 0f;
+        private float attackPowerBuff = 0f;
+        private float fireRateBuff = 0f;
+        private float reloadSpeedBuff = 0f;
+        private int maxAmmoBuff = 0;
+
         /// <summary>
         /// 次のレベルに必要な経験値
         /// </summary>
         private int RequiredExp => CurrentLevel * 5; // 例: レベル1なら5、レベル2なら10、レベル3なら15...
+
+        private int FinalAttackPower => currentWeapon != null ? Mathf.RoundToInt(currentWeapon.AttackPower * (1f + attackPowerBuff)) : 0;
+
+        private int FinalMaxAmmo => currentWeapon != null ? currentWeapon.MaxAmmo + maxAmmoBuff : 0;
+        private float FinalReloadTime => currentWeapon != null ? currentWeapon.ReloadTime * Mathf.Max(0.1f, 1f - reloadSpeedBuff) : 0f;
+        private float FinalFireRate => currentWeapon != null ? currentWeapon.FireRate * Mathf.Max(0.1f, 1f - fireRateBuff) : 0f;
 
         /// <summary>
         /// 外部（アニメーションやUIなど）に現在の速度を教えるために保持するVelocity
@@ -166,14 +179,24 @@ namespace TPSRoguelite.InGame.Player {
         {
             currentWeapon = MasterDataAccessor.Instance.GetById<WeaponDataRecord>(weaponId);
 
-            if (currentWeapon != null) {
+            if (currentWeapon != null)
+            {
                 CurrentAmmo = currentWeapon.MaxAmmo;
-            } else {
+            }
+            else
+            {
                 Debug.LogError("WeaponDataがありません。");
             }
 
             CurrentExp = 0;
             CurrentLevel = 1;
+            
+            // バフを初期化（リトライ時に強さが残らないようにする）
+            moveSpeedBuff = 0f;
+            attackPowerBuff = 0f;
+            fireRateBuff = 0f;
+            reloadSpeedBuff = 0f;
+            maxAmmoBuff = 0;
 
             if (levelUpText != null)
             {
@@ -258,7 +281,7 @@ namespace TPSRoguelite.InGame.Player {
             Vector3 moveDirection = (cameraForward * moveInput.y + cameraRight * moveInput.x).normalized;
 
             // 物理演算で移動させる
-            Vector3 targetVelocity = moveDirection * MOVE_SPEED;
+            Vector3 targetVelocity = moveDirection * (MOVE_SPEED * (1f + moveSpeedBuff));
             rigidbody.linearVelocity = new Vector3(targetVelocity.x, rigidbody.linearVelocity.y, targetVelocity.z);
 
             // 外部（アニメーションやUIなど）に現在の速度を教えるためにプロパティを更新
@@ -323,7 +346,7 @@ namespace TPSRoguelite.InGame.Player {
             Debug.Log($"セミオートで撃った！弾数：{CurrentAmmo}");
             Shoot();
 
-            await UniTask.Delay(System.TimeSpan.FromSeconds(currentWeapon.FireRate), cancellationToken: token);
+            await UniTask.Delay(System.TimeSpan.FromSeconds(FinalFireRate), cancellationToken: token);
 
             canShoot = true;
         }
@@ -351,7 +374,7 @@ namespace TPSRoguelite.InGame.Player {
                 await UniTask.Delay(TimeSpan.FromSeconds(currentWeapon.FireInteval), cancellationToken: token);
             }
 
-            await UniTask.Delay(TimeSpan.FromSeconds(currentWeapon.FireRate), cancellationToken: token);
+            await UniTask.Delay(TimeSpan.FromSeconds(FinalFireRate), cancellationToken: token);
             canShoot = true;
         }
 
@@ -379,7 +402,7 @@ namespace TPSRoguelite.InGame.Player {
                 }
             }
 
-            await UniTask.Delay(TimeSpan.FromSeconds(currentWeapon.FireRate), cancellationToken: this.GetCancellationTokenOnDestroy());
+            await UniTask.Delay(TimeSpan.FromSeconds(FinalFireRate), cancellationToken: this.GetCancellationTokenOnDestroy());
 
             canShoot = true;
         }
@@ -404,15 +427,17 @@ namespace TPSRoguelite.InGame.Player {
                 IDamageable target = hitInfo.collider.GetComponent<IDamageable>();
 
                 // ダメージを受ける性質を持ったオブジェクトであればダメージを与える
-                if (target != null) {
-                    target.TakeDamage(currentWeapon.AttackPower);
+                if (target != null)
+                {
+                    target.TakeDamage(FinalAttackPower);
                 }
             }
         }
 
         private void OnReload(InputAction.CallbackContext context)
         {
-            if (isReloading || CurrentAmmo == currentWeapon.MaxAmmo) {
+            if (isReloading || CurrentAmmo == FinalMaxAmmo)
+            {
                 return;
             }
 
@@ -433,7 +458,7 @@ namespace TPSRoguelite.InGame.Player {
                 reloadCircleImage.fillAmount = 0f;
             }
 
-            DOVirtual.Float(0f, 1f, currentWeapon.ReloadTime, UpdateReloadUI).SetEase(Ease.Linear).OnComplete(FinishReload);
+            DOVirtual.Float(0f, 1f, FinalReloadTime, UpdateReloadUI).SetEase(Ease.Linear).OnComplete(FinishReload);
         }
 
         /// <summary>
@@ -493,7 +518,7 @@ namespace TPSRoguelite.InGame.Player {
         {
             if (ammoText != null && currentWeapon != null)
             {
-                ammoText.text = $"{CurrentAmmo}/{currentWeapon.MaxAmmo}";
+                ammoText.text = $"{CurrentAmmo}/{FinalMaxAmmo}";
             }
         }
 
@@ -518,7 +543,7 @@ namespace TPSRoguelite.InGame.Player {
                 reloadUI.SetActive(false);
             }
 
-            CurrentAmmo = currentWeapon.MaxAmmo;
+            CurrentAmmo = FinalMaxAmmo;
             UpdateCurrentAmmoUI();
             isReloading = false;
         }
@@ -591,6 +616,45 @@ namespace TPSRoguelite.InGame.Player {
             await UniTask.Delay(TimeSpan.FromSeconds(LEVEL_UP_EFFECT_DURATION), cancellationToken: this.GetCancellationTokenOnDestroy());
 
             levelUpText.enabled = false;
+
+            LevelUpManager.Instance.OnLevelUp(inputActions, this);
+        }
+
+        /// <summary>
+        /// スキルを適用する
+        /// </summary>
+        public void ApplySkill(SkillDataRecord skill)
+        {
+            switch ((SkillType)skill.SkillType)
+            {
+                case SkillType.MoveSpeedUp:
+                    moveSpeedBuff += skill.Value;
+                    break;
+
+                case SkillType.AttackPowerUp:
+                    attackPowerBuff += skill.Value;
+                    break;
+
+                case SkillType.FireRateUp:
+                    fireRateBuff += skill.Value;
+                    break;
+
+                case SkillType.ReloadSpeedUp:
+                    reloadSpeedBuff += skill.Value;
+                    break;
+
+                case SkillType.MaxAmmoUp:
+                    maxAmmoBuff += (int)skill.Value;
+                    CurrentAmmo += (int)skill.Value; // 増えた分だけ今すぐ弾を補充
+                    UpdateCurrentAmmoUI();
+                    break;
+
+                default:
+                    Debug.LogWarning($"未定義のスキルタイプです: {skill.SkillType}");
+                    break;
+            }
+
+            Debug.Log($"{skill.SkillName} を取得しました！");
         }
     }
 }
