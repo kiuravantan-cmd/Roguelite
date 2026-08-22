@@ -103,6 +103,7 @@ MonoBehaviour:
     - default
     - EnemyData
     - WeaponData
+    - SkillData
   m_SchemaTemplates: []
   m_GroupTemplateObjects:
   - {fileID: 11400000, guid: 51726258e5a2ac3478d2dd850e007be2, type: 2}

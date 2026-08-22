@@ -27,6 +27,12 @@ MonoBehaviour:
     m_SerializedLabels:
     - WeaponData
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ea291b068ba561e46874a576b9239c0e
+    m_Address: SkillData
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - SkillData
+    FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: ca00499ed81e2344d969df18e3b384eb, type: 2}
   m_SchemaSet:
