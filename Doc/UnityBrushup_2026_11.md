@@ -477,7 +477,6 @@ namespace TPSRoguelite.InGame.Manager
             if (inputActions != null)
             {
                 inputActions.Player.Disable();
-                inputActions.UI.Enable();
             }
         }
 
@@ -505,7 +504,6 @@ namespace TPSRoguelite.InGame.Manager
             Cursor.visible = false;
             if (inputActions != null)
             {
-                inputActions.UI.Disable();
                 inputActions.Player.Enable();
             }
         }
