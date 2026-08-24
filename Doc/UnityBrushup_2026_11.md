@@ -549,6 +549,44 @@ namespace TPSRoguelite.InGame.Player
 }
 ```
 
+カメラの移動も停止します<br>
+**ファイル名： `CameraController.cs`（追加・変更部分）**
+``` diff
+using UnityEngine;
+
+namespace TPSRoguelite.InGame.Camera 
+{
+    public class CameraController : MonoBehaviour 
+    {
+        // ... (中略) ...
+
+        private void OnDisable() 
+        {
+            inputActions.Disable();
+        }
+
+        private void Update() 
+        {
++           if (Time.timeScale == 0f)
++           {
++               return;
++           }
+
+            // マウスの移動量を取得
+            lookInput = inputActions.Player.Look.ReadValue<Vector2>();
+
+            // 感度を掛けて現在の角度に足し引きする
+            currentYaw += lookInput.x * lookSensitivity;
+            currentPitch -= lookInput.y * lookSensitivity;
+
+            currentPitch = Mathf.Clamp(currentPitch, minPitch, maxPitch);
+        }
+
+        // ... (中略) ...
+    }
+}
+```
+
 ## 4. UIの作成と連携（最後の仕上げ！）
 💡 エディタでの作業手順<br>
 [ ] Hierarchyの `Canvas` に、画面全体を覆う黒半透明の `Panel`（名前：`SkillSelectPanel`）を作ります。<br>
