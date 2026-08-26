@@ -151,10 +151,10 @@ namespace InGame.Manager
 `GameManager` オブジェクトの `Timer Text` の枠に、先ほど作ったテキストをセットします。
 
 ## 2. プレイヤーのHPと死（ゲームオーバー）
-敵に触れた（または撃たれた）時にダメージを受け、HPが0になったらゲームオーバーになるようにします。<br>
+敵に触れた（または撃たれた）時にダメージを受け、HPが0になったらゲームオーバーになるようにします。<br><br>
 💡 **準備：HPバーの配置**<br>
 [ ] Canvasの中に、UIの `Slider` を作り、名前を `HpSlider` にします。（Interactableのチェックは外す）<br>
-[ ] 画面の左上などに配置し、色を赤や緑にします。<br>
+[ ] 画面の左上などに配置し、色を赤や緑にします。<br><br>
 **ファイル名： `PlayerController.cs`（追加・変更部分のみ）**
 ``` diff
 namespace TPSRoguelite.InGame.Player 
@@ -219,17 +219,18 @@ namespace TPSRoguelite.InGame.Player
 【エディタでの作業】<br>
 Player オブジェクトの Hp Slider の枠に、今作ったスライダーをセットします。
 
-## 3. リザルトシーンとデータの引継ぎゲームの成績（クリアしたか？ 何レベルまでいったか？）を表示する画面を作ります。
-💡 **準備：シーンの作成と登録**
-1. メニューの File > New Scene で新しいシーンを作り、名前を ResultScene にして保存します。
-2. メニューの File > Build Settings を開きます。
-3. Scenes In Build という上の広い枠に、元のメインゲームのシーンと、今作った ResultScene を両方ともドラッグ＆ドロップして入れます。（これをやらないと SceneManager で移動できません！）
-
+## 3. リザルトシーンとデータの引継ぎ
+ゲームの成績（クリアしたか？ 何レベルまでいったか？）を表示する画面を作ります。<br><br>
+💡 **準備：シーンの作成と登録**<br>
+1. メニューの `File > New Scene` で新しいシーンを作り、名前を `ResultScene` にして保存します。<br>
+2. メニューの `File > Build Settings` を開きます。<br>
+3. `Scenes In Build` という上の広い枠に、元のメインゲームのシーンと、今作った `ResultScene` を両方ともドラッグ＆ドロップして入れます。（これをやらないと `SceneManager` で移動できません！）<br>
+<br>
 **リザルト画面の作成**
-1. ResultScene を開き、Canvasの中に結果を表示する TextMeshPro を作ります。（名前を ResultText にします）
+1. `ResultScene` を開き、Canvasの中に結果を表示する `TextMeshPro` を作ります。（名前を `ResultText` にします）
 2. 「タイトルへ戻る」ボタン（Button - TextMeshPro）を作ります。
-3. 空のオブジェクトを作り、ResultManager.cs というスクリプトを作ってアタッチします。
-**ファイル名： ResultManager.cs**
+3. 空のオブジェクトを作り、`ResultManager.cs` というスクリプトを作ってアタッチします。
+**ファイル名： `ResultManager.cs`**
 ``` cs
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -284,6 +285,6 @@ namespace TPSRoguelite.Result
 }
 ```
 【エディタでの作業】
-[ ] ResultManager の枠に ResultText をセットします。
-[ ] 「タイトルへ戻るボタン」の On Click () に ResultManager を入れ、OnClickReturnTitle() を設定します。
+[ ] `ResultManager` の枠に `ResultText` をセットします。
+[ ] 「タイトルへ戻るボタン」の `On Click ()` に `ResultManager` を入れ、`OnClickReturnTitle()` を設定します。
 **これで、あなたのゲームの「ループ（始まりから終わり）」が完全に繋がりました！**
