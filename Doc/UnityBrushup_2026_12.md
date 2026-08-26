@@ -5,15 +5,16 @@
 2. **プレイヤーのHP（敗北条件）**：敵にやられたらゲームオーバーになる仕組みを作る。
 3. **シーン遷移とデータ引継ぎ**：タイトルやリザルト（結果発表）画面を作り、到達レベルやタイムを引き継ぐ。
 
-## 1. タイムサバイバル（タイマー）の実装ヴァンサバ系ゲームのクリア条件は「時間」です。
-ゲーム全体の進行を管理している GameManager に、カウントダウンタイマーを実装しましょう。
-💡 **準備：タイマーUIの配置**
-[ ] Hierarchyの Canvas の中に、UI > Text - TextMeshPro を作成し、名前を TimerText にします。
+## 1. タイムサバイバル（タイマー）の実装
+ヴァンサバ系ゲームのクリア条件は「時間」です。<br>
+ゲーム全体の進行を管理している `GameManager` に、カウントダウンタイマーを実装しましょう。<br>
+💡 **準備：タイマーUIの配置**<br>
+[ ] Hierarchyの `Canvas` の中に、`UI > Text - TextMeshPro` を作成し、名前を `TimerText` にします。<br>
 [ ] 画面の上部中央に大きく配置します。
 
-**プログラムの追加**
-GameManager.cs にタイマー機能と、シーンをまたいでデータを保存する機能を追加します。（第7週で作成した GameManager を改修します）
-**ファイル名： GameManager.cs（追加・変更部分のみ）**
+**プログラムの追加**<br>
+`GameManager.cs` にタイマー機能と、シーンをまたいでデータを保存する機能を追加します。<br>
+**ファイル名： `GameManager.cs`（追加・変更部分のみ）**
 ``` diff
 using UnityEngine;
 + using UnityEngine.SceneManagement;
@@ -29,8 +30,8 @@ namespace InGame.Manager
         [SerializeField] private EnemySpawner enemySpawner = null;
         
 +       [Header("Game Rules")]
-+       [SerializeField] private TextMeshProUGUI timerText;
-+       [SerializeField] private float gameClearTime = 180f; // 3分間（180秒）でクリア
++       [SerializeField, Tooltip("ゲームタイマーのテキスト")]  private TextMeshProUGUI timerText;
++       [SerializeField, Header("クリア時間（秒）"), Tooltip("クリアに必要な時間")] private float gameClearTime = 180f;
 
         // --- シーン間（リザルト画面）で引き継ぐデータ ---
 +       public bool IsGameClear { get; private set; }
@@ -45,7 +46,7 @@ namespace InGame.Manager
             if (Instance == null)
             {
                 Instance = this;
-+               DontDestroyOnLoad(gameObject); // シーンが変わってもGameManagerを破壊しない！
+                DontDestroyOnLoad(gameObject);
             }
             else
             {
@@ -68,27 +69,38 @@ namespace InGame.Manager
             if (player != null) player.Setup();
             if (enemySpawner != null) enemySpawner.Setup();
 
-            isGameActive = true; // ゲーム開始！
++           IsGameClear = false;
++           currentTime = gameClearTime; // タイマーをセット
++           isGameActive = true; // ゲーム開始！
         }
 
         private void Update()
         {
-            // ゲーム中以外はタイマーを動かさない
-            if (!isGameActive) return;
+            // ゲームがアクティブでない場合は何もしない
+            if (!isGameActive)
+            {
+                return;
+            }
 
-            // タイマーを減らす
+            // ゲームが一時停止中の場合はタイマーを更新しない
+            if (Time.timeScale == 0f)
+            {
+                return;
+            }
+
+            // タイマーの更新
             currentTime -= Time.deltaTime;
-            SurvivedTime = gameClearTime - currentTime; // 生存時間を記録
+            SurvivedTime = gameClearTime - currentTime;
 
             // UIを更新（分：秒 の形式で表示）
             if (timerText != null)
             {
-                int minutes = Mathf.FloorToInt(currentTime / 60F);
-                int seconds = Mathf.FloorToInt(currentTime - minutes * 60);
-                timerText.text = $"{minutes:00}:{seconds:00}";
+                int minutes = Mathf.FloorToInt(currentTime / 60f);
+                int seconds = Mathf.FloorToInt(currentTime - minutes * 60f);
+                timerText.SetText($"{minutes:00}:{seconds:00}");
             }
 
-            // 0秒になったらゲームクリア！
+            // 0秒になったらゲームクリア！    
             if (currentTime <= 0f)
             {
                 GameClear();
@@ -121,27 +133,29 @@ namespace InGame.Manager
             GoToResultScene();
         }
 
+        /// <summary>
+        /// リザルトシーンへ遷移する処理
+        /// </summary>
         private void GoToResultScene()
         {
-            // 時間停止などの呪いを解く（非常に重要！）
             Time.timeScale = 1f;
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
 
-            // リザルトシーンへ遷移
             SceneManager.LoadScene("ResultScene");
         }
     }
 }
 ```
-【エディタでの作業】
-GameManager オブジェクトの Timer Text の枠に、先ほど作ったテキストをセットします。
+【エディタでの作業】<br>
+`GameManager` オブジェクトの `Timer Text` の枠に、先ほど作ったテキストをセットします。
 
-## 2. プレイヤーのHPと死（ゲームオーバー）敵に触れた（または撃たれた）時にダメージを受け、HPが0になったらゲームオーバーになるようにします。
-💡 **準備：HPバーの配置**
-[ ] Canvasの中に、UIの Slider を作り、名前を HpSlider にします。（Interactableのチェックは外す）<br>
+## 2. プレイヤーのHPと死（ゲームオーバー）
+敵に触れた（または撃たれた）時にダメージを受け、HPが0になったらゲームオーバーになるようにします。<br>
+💡 **準備：HPバーの配置**<br>
+[ ] Canvasの中に、UIの `Slider` を作り、名前を `HpSlider` にします。（Interactableのチェックは外す）<br>
 [ ] 画面の左上などに配置し、色を赤や緑にします。<br>
-**ファイル名： PlayerController.cs（追加・変更部分のみ）**
+**ファイル名： `PlayerController.cs`（追加・変更部分のみ）**
 ``` diff
 namespace TPSRoguelite.InGame.Player 
 {
