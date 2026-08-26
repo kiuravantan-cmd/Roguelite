@@ -221,14 +221,14 @@ Player オブジェクトの Hp Slider の枠に、今作ったスライダー�
 
 ## 3. リザルトシーンとデータの引継ぎ
 ゲームの成績（クリアしたか？ 何レベルまでいったか？）を表示する画面を作ります。<br><br>
-💡 **準備：シーンの作成と登録**<br>
-1. メニューの `File > New Scene` で新しいシーンを作り、名前を `ResultScene` にして保存します。<br>
-2. メニューの `File > Build Settings` を開きます。<br>
+💡 **準備：シーンの作成と登録**
+1. メニューの `File > New Scene` で新しいシーンを作り、名前を `ResultScene` にして保存します。
+2. メニューの `File > Build Settings` を開きます。
 3. `Scenes In Build` という上の広い枠に、元のメインゲームのシーンと、今作った `ResultScene` を両方ともドラッグ＆ドロップして入れます。（これをやらないと `SceneManager` で移動できません！）<br>
-<br>
+
 **リザルト画面の作成**
 1. `ResultScene` を開き、Canvasの中に結果を表示する `TextMeshPro` を作ります。（名前を `ResultText` にします）
-2. 「タイトルへ戻る」ボタン（Button - TextMeshPro）を作ります。
+2. 「タイトルへ戻る」ボタン（Button - TextMeshPro）を作ります。<br>
 3. 空のオブジェクトを作り、`ResultManager.cs` というスクリプトを作ってアタッチします。
 **ファイル名： `ResultManager.cs`**
 ``` cs
@@ -284,7 +284,7 @@ namespace TPSRoguelite.Result
     }
 }
 ```
-【エディタでの作業】
-[ ] `ResultManager` の枠に `ResultText` をセットします。
-[ ] 「タイトルへ戻るボタン」の `On Click ()` に `ResultManager` を入れ、`OnClickReturnTitle()` を設定します。
+【エディタでの作業】<br>
+[ ] `ResultManager` の枠に `ResultText` をセットします。<br>
+[ ] 「タイトルへ戻るボタン」の `On Click ()` に `ResultManager` を入れ、`OnClickReturnTitle()` を設定します。<br>
 **これで、あなたのゲームの「ループ（始まりから終わり）」が完全に繋がりました！**
