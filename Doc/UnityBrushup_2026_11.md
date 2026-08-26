@@ -477,7 +477,6 @@ namespace TPSRoguelite.InGame.Manager
             if (inputActions != null)
             {
                 inputActions.Player.Disable();
-                inputActions.UI.Enable();
             }
         }
 
@@ -505,7 +504,6 @@ namespace TPSRoguelite.InGame.Manager
             Cursor.visible = false;
             if (inputActions != null)
             {
-                inputActions.UI.Disable();
                 inputActions.Player.Enable();
             }
         }
@@ -547,6 +545,44 @@ namespace TPSRoguelite.InGame.Player
 
 +           LevelUpManager.Instance.OnLevelUp(inputActions, this);
         }
+    }
+}
+```
+
+カメラの移動も停止します<br>
+**ファイル名： `CameraController.cs`（追加・変更部分）**
+``` diff
+using UnityEngine;
+
+namespace TPSRoguelite.InGame.Camera 
+{
+    public class CameraController : MonoBehaviour 
+    {
+        // ... (中略) ...
+
+        private void OnDisable() 
+        {
+            inputActions.Disable();
+        }
+
+        private void Update() 
+        {
++           if (Time.timeScale == 0f)
++           {
++               return;
++           }
+
+            // マウスの移動量を取得
+            lookInput = inputActions.Player.Look.ReadValue<Vector2>();
+
+            // 感度を掛けて現在の角度に足し引きする
+            currentYaw += lookInput.x * lookSensitivity;
+            currentPitch -= lookInput.y * lookSensitivity;
+
+            currentPitch = Mathf.Clamp(currentPitch, minPitch, maxPitch);
+        }
+
+        // ... (中略) ...
     }
 }
 ```
