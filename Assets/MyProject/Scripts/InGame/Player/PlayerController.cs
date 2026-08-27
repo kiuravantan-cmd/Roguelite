@@ -1,20 +1,20 @@
 using Core.Interface;
-using UnityEngine;
-using UnityEngine.EventSystems;
-using UnityEngine.InputSystem;
+using Core.MasterData;
 using Cysharp.Threading.Tasks;
+using DG.Tweening;
 using System;
 using System.Threading;
-using TPSRoguelite.InGame.Enum;
-using Core.MasterData;
 using TMPro;
-using UnityEngine.UI;
-using DG.Tweening;
+using TPSRoguelite.InGame.Enum;
 using TPSRoguelite.InGame.Manager;
+using UnityEngine;
+using UnityEngine.InputSystem;
+using UnityEngine.UI;
 
 namespace TPSRoguelite.InGame.Player {
 
-    public class PlayerController : MonoBehaviour {
+    public class PlayerController : MonoBehaviour, IDamageable
+    {
         /// <summary>
         /// 移動速度
         /// </summary>
@@ -87,6 +87,11 @@ namespace TPSRoguelite.InGame.Player {
         [SerializeField] private ParticleSystem levelUpEffect;
 
         /// <summary>
+        /// HPバー
+        /// </summary>
+        [SerializeField] private Slider hpSlider;
+
+        /// <summary>
         /// 武器のデータ
         /// </summary>
         private WeaponDataRecord currentWeapon;
@@ -146,6 +151,16 @@ namespace TPSRoguelite.InGame.Player {
         public int CurrentExp { get; private set; }
 
         public int CurrentLevel { get; private set; }
+
+        /// <summary>
+        /// 最大HP
+        /// </summary>
+        public int MaxHP { get; private set; } = 100;
+
+        /// <summary>
+        /// 現在のHP
+        /// </summary>
+        public int CurrentHP { get; private set; }
 
         private int RequiredExp => CurrentLevel * 5;
 
@@ -214,6 +229,9 @@ namespace TPSRoguelite.InGame.Player {
             }
 
             UpdateExpUI();
+
+            CurrentHP = MaxHP;
+            UpdateHpUI();
 
             gameObject.SetActive(true);
         }
@@ -603,6 +621,44 @@ namespace TPSRoguelite.InGame.Player {
                     maxAmmoBuf += (int)skill.Value;
                     UpdateCurrentAmmoUI();
                     break;
+            }
+        }
+
+        public void TakeDamage (int damageAmount)
+        {
+            if (damageAmount <= 0 || CurrentHP <= 0)
+            {
+                return;
+            }
+
+            CurrentHP -= damageAmount;
+            Debug.Log($"プレイヤーがダメージを受けた！ 残りHP: {CurrentHP}");
+
+            UpdateHpUI();
+
+            if (CurrentHP <= 0)
+            {
+                Die();
+            }
+        }
+
+        private void UpdateHpUI()
+        {
+            if (hpSlider != null)
+            {
+                hpSlider.value = (float)CurrentHP / MaxHP;
+            }
+        }
+
+        private void Die()
+        {
+            Debug.Log("プレイヤーが倒れました。");
+            gameObject.SetActive(false); // プレイヤーを消す
+
+            // GameManagerにゲームオーバーを知らせる
+            if (GameManager.Instance != null)
+            {
+                GameManager.Instance.GameOver();
             }
         }
     }

@@ -143,6 +143,9 @@ namespace TPSRoguelite.InGame.Manager
             GoToResultScene();
         }
 
+        /// <summary>
+        /// リザルトシーンへ遷移する処理
+        /// </summary>
         private void GoToResultScene()
         {
             Time.timeScale = 1f;

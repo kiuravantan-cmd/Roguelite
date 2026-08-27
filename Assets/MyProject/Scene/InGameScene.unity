@@ -2091,6 +2091,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 70798184}
     - target: {fileID: 1678090033959782453, guid: 508b5f20da7e2b040b8dc5889f86cfdb, type: 3}
+      propertyPath: hpSlider
+      value: 
+      objectReference: {fileID: 2004898144}
+    - target: {fileID: 1678090033959782453, guid: 508b5f20da7e2b040b8dc5889f86cfdb, type: 3}
       propertyPath: reloadUI
       value: 
       objectReference: {fileID: 979692696}
