@@ -253,17 +253,19 @@ MVPパターンでは、役割を**3つのスクリプト**に完全に分けま
 ・**View（ビュー / 見た目係）**：ボタンや文字などの「UI」だけをいじる。ルールのことは一切知らない。<br>
 ・**Presenter（プレゼンター / 司会者）**：Modelからデータをもらい、Viewに「こう表示して」と命令する司令塔。
 
-**💡 準備：シーンの作成と登録**
-1. メニューの `File > New Scene` で新しいシーンを作り、名前を `ResultScene` にして保存します。
-2. メニューの `File > Build Settings` を開きます。
-3. `Scenes In Build` という上の広い枠に、元のメインゲームのシーンと、今作った `ResultScene` を両方ともドラッグ＆ドロップして入れます。（これをやらないと `SceneManager` で移動できません！）
-4. `ResultScene` を開き、Canvasの中に結果を表示する `TextMeshPro` を作ります。（名前を `ResultText` にします）
-5. 「タイトルへ戻る」ボタン（Button - TextMeshPro）を作ります。
+**💡 準備1：テキストとボタンの作成**
+1. `ResultScene` を開き、Canvasを作ります。
+2. Canvasの中に結果を表示する `TextMeshPro` を作ります。（名前を `ResultText` にします）
+3. 「タイトルへ戻る」ボタン（Button - TextMeshPro）を作ります。
+
+**💡 準備2：フォルダの作成**
+1. `Script\InGame` にフォルダを作ります。（名前を `UI` にします）
+2. `UI` フォルダの中にフォルダを作ります。（名前を `Result` にします）
 
 ### 3-1. Model（データ係）の作成
 GameManager（前のシーンから生き残っているシングルトン）からデータを受け取るだけのシンプルなクラスを作ります。
 
-**ファイル名： `ResultModel.cs`**
+**ファイル名： `ResultModel.cs`（作成場所:`Script\InGame\UI\Result`）**
 ``` cs
 using InGame.Manager; // GameManagerにアクセスするため
 
@@ -293,7 +295,7 @@ namespace TPSRoguelite.Result
 UIの文字を書き換えたり、ボタンが押されたことを「司会者（Presenter）」に知らせるだけのクラスを作ります。
 ルールの計算は絶対にここには書きません。
 
-**ファイル名： `ResultView.cs`**
+**ファイル名： `ResultView.cs`（作成場所:`Script\InGame\UI\Result`）**
 ``` cs
 using UnityEngine;
 using UnityEngine.UI;
@@ -339,7 +341,7 @@ namespace TPSRoguelite.Result
 データ係（Model）と見た目係（View）を繋ぎ合わせる、一番偉いクラスを作ります。
 オブジェクトにアタッチするのはこのクラス（とView）だけです。
 
-**ファイル名： `ResultPresenter.cs`**
+**ファイル名： `ResultPresenter.cs`（作成場所:`Script\InGame\UI\Result`）**
 ``` cs
 using UnityEngine;
 using UnityEngine.SceneManagement;
