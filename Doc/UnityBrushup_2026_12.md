@@ -46,6 +46,8 @@ namespace InGame.Manager
 {
     public class GameManager : MonoBehaviour
     {
++       private const string RESULT_SCENE_NAME = "ResultScene";
+
         public static GameManager Instance { get; private set; }
 
         [SerializeField] private PlayerController player = null;
@@ -96,76 +98,76 @@ namespace InGame.Manager
 +           isGameActive = true; // ゲーム開始！
         }
 
-        private void Update()
-        {
-            // ゲームがアクティブでない場合は何もしない
-            if (!isGameActive)
-            {
-                return;
-            }
-
-            // ゲームが一時停止中の場合はタイマーを更新しない
-            if (Time.timeScale == 0f)
-            {
-                return;
-            }
-
-            // タイマーの更新
-            currentTime -= Time.deltaTime;
-            SurvivedTime = gameClearTime - currentTime;
-
-            // UIを更新（分：秒 の形式で表示）
-            if (timerText != null)
-            {
-                int minutes = Mathf.FloorToInt(currentTime / 60f);
-                int seconds = Mathf.FloorToInt(currentTime - minutes * 60f);
-                timerText.SetText($"{minutes:00}:{seconds:00}");
-            }
-
-            // 0秒になったらゲームクリア！    
-            if (currentTime <= 0f)
-            {
-                GameClear();
-            }
-        }
-
-        /// <summary>
-        /// ゲームクリア処理
-        /// </summary>
-        private void GameClear()
-        {
-            isGameActive = false;
-            IsGameClear = true;
-            FinalLevel = player != null ? player.CurrentLevel : 1;
-            
-            Debug.Log("ゲームクリア！リザルトへ移行します。");
-            GoToResultScene();
-        }
-
-        /// <summary>
-        /// ゲームオーバー処理（プレイヤーから呼ばれる）
-        /// </summary>
-        public void GameOver()
-        {
-            isGameActive = false;
-            IsGameClear = false;
-            FinalLevel = player != null ? player.CurrentLevel : 1;
-            
-            Debug.Log("ゲームオーバー...");
-            GoToResultScene();
-        }
-
-        /// <summary>
-        /// リザルトシーンへ遷移する処理
-        /// </summary>
-        private void GoToResultScene()
-        {
-            Time.timeScale = 1f;
-            Cursor.lockState = CursorLockMode.None;
-            Cursor.visible = true;
-
-            SceneManager.LoadScene("ResultScene");
-        }
++       private void Update()
++       {
++           // ゲームがアクティブでない場合は何もしない
++           if (!isGameActive)
++           {
++               return;
++           }
++
++           // ゲームが一時停止中の場合はタイマーを更新しない
++           if (Time.timeScale == 0f)
++           {
++               return;
++           }
++
++           // タイマーの更新
++           currentTime -= Time.deltaTime;
++           SurvivedTime = gameClearTime - currentTime;
++
++           // UIを更新（分：秒 の形式で表示）
++           if (timerText != null)
++           {
++               int minutes = Mathf.FloorToInt(currentTime / 60f);
++               int seconds = Mathf.FloorToInt(currentTime - minutes * 60f);
++               timerText.SetText($"{minutes:00}:{seconds:00}");
++           }
++
++           // 0秒になったらゲームクリア！    
++           if (currentTime <= 0f)
++           {
++               GameClear();
++           }
++       }
++
++       /// <summary>
++       /// ゲームクリア処理
++       /// </summary>
++       private void GameClear()
++       {
++           isGameActive = false;
++           IsGameClear = true;
++           FinalLevel = player != null ? player.CurrentLevel : 1;
++            
++           Debug.Log("ゲームクリア！リザルトへ移行します。");
++           GoToResultScene();
++       }
++
++       /// <summary>
++       /// ゲームオーバー処理（プレイヤーから呼ばれる）
++       /// </summary>
++       public void GameOver()
++       {
++           isGameActive = false;
++           IsGameClear = false;
++           FinalLevel = player != null ? player.CurrentLevel : 1;
++            
++           Debug.Log("ゲームオーバー...");
++           GoToResultScene();
++       }
++
++       /// <summary>
++       /// リザルトシーンへ遷移する処理
++       /// </summary>
++       private void GoToResultScene()
++       {
++           Time.timeScale = 1f;
++           Cursor.lockState = CursorLockMode.None;
++           Cursor.visible = true;
++
++           SceneManager.LoadScene(RESULT_SCENE_NAME);
++       }
     }
 }
 ```
@@ -173,72 +175,111 @@ namespace InGame.Manager
 `GameManager` オブジェクトの `Timer Text` の枠に、先ほど作ったテキストをセットします。
 
 # 2.2 プレイヤーのHPと死（ゲームオーバー）
-敵に触れた（または撃たれた）時にダメージを受け、HPが0になったらゲームオーバーになるようにします。
+敵に触れた時にダメージを受け、HPが0になったらゲームオーバーになるようにします。
 
 💡 **準備：HPバーの配置**<br>
 [ ] Canvasの中に、UIの `Slider` を作り、名前を `HpSlider` にします。（Interactableのチェックは外す）<br>
-[ ] 画面の左上などに配置し、色を赤や緑にします。<br><br>
+[ ] 画面の左上などに配置し、色を赤や緑にします。
+
+
 **ファイル名： `PlayerController.cs`（追加・変更部分のみ）**
 ``` diff
 namespace TPSRoguelite.InGame.Player 
 {
-    // IDamageable インターフェースを追加して、ダメージを受けられるようにする
-    public class PlayerController : MonoBehaviour, IDamageable
+-   public class PlayerController : MonoBehaviour
++   public class PlayerController : MonoBehaviour, IDamageable
     {
-        // --- 変数に追加 ---
-        [Header("Status")]
-        public int MaxHP { get; private set; } = 100;
-        public int CurrentHP { get; private set; }
+        // ... 既存の処理 ...
 
-        [Header("HP UI")]
-        [SerializeField] private Slider hpSlider;
+        [SerializeField] private TextMeshProUGUI levelUpText;
+        [SerializeField] private ParticleSystem levelUpEffect;
+
+        private WeaponDataRecord currentWeapon;
+
+        // ... 既存の処理 ...
+
+        [SerializeField, Header("HP UI")] private Slider hpSlider;
+        
+        // ... 既存の処理 ...
+
+        public int CurrentExp { get; private set; }
+        public int CurrentLevel { get; private set; }
+
++       public int MaxHP { get; private set; } = 100;
++       public int CurrentHP { get; private set; }
+
+        private int RequiredExp => CurrentLevel * 5;
+
+        // ... 既存の処理 ...
 
         public void Setup()
         {
             // ... 既存の処理 ...
             
-            CurrentHP = MaxHP;
-            UpdateHpUI();
++           CurrentHP = MaxHP;
++           UpdateHpUI();
             
             gameObject.SetActive(true);
         }
 
-        // --- 新しく追加するメソッド ---
-        public void TakeDamage(int damageAmount)
-        {
-            if (damageAmount <= 0 || CurrentHP <= 0) return;
-
-            CurrentHP -= damageAmount;
-            Debug.Log($"プレイヤーがダメージを受けた！ 残りHP: {CurrentHP}");
-
-            UpdateHpUI();
-
-            if (CurrentHP <= 0)
-            {
-                Die();
-            }
-        }
-
-        private void UpdateHpUI()
-        {
-            if (hpSlider != null)
-            {
-                hpSlider.value = (float)CurrentHP / MaxHP;
-            }
-        }
-
-        private void Die()
-        {
-            Debug.Log("プレイヤーが倒れました。");
-            gameObject.SetActive(false); // プレイヤーを消す
-
-            // GameManagerにゲームオーバーを知らせる
-            if (InGame.Manager.GameManager.Instance != null)
-            {
-                InGame.Manager.GameManager.Instance.GameOver();
-            }
-        }
++       public void TakeDamage(int damageAmount)
++       {
++           if (damageAmount <= 0 || CurrentHP <= 0)
++           {
++               return;
++           }
++
++           CurrentHP -= damageAmount;
++           Debug.Log($"プレイヤーがダメージを受けた！ 残りHP: {CurrentHP}");
++
++           UpdateHpUI();
++
++           if (CurrentHP <= 0)
++           {
++               Die();
++           }
++       }
++
++       private void UpdateHpUI()
++       {
++           if (hpSlider != null)
++           {
++               hpSlider.value = (float)CurrentHP / MaxHP;
++           }
++       }
++
++       private void Die()
++       {
++           Debug.Log("プレイヤーが倒れました。");
++           gameObject.SetActive(false); // プレイヤーを消す
++
++           // GameManagerにゲームオーバーを知らせる
++           if (GameManager.Instance != null)
++           {
++               GameManager.Instance.GameOver();
++           }
++       }
 ```
+
+``` diff
+namespace TPSRoguelite.InGame.Enemy 
+{
+    public class EnemyState : MonoBehaviour, IDamageable
+    {
+        // ... 既存の処理 ...
+
++       private void OnCollisionEnter (Collision collision)
++       {
++           var player = collision.gameObject.GetComponent<IDamageable>();
++           if (player != null && collision.gameObject.CompareTag("Player"))
++           {
++               player.TakeDamage(10);
++           }
++       }
+    }
+}
+```
+
 **【エディタでの作業】**<br>
 `Player` オブジェクトの `Hp Slider` の枠に、今作ったスライダーをセットします。
 
