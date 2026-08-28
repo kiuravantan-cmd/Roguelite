@@ -261,6 +261,7 @@ namespace TPSRoguelite.InGame.Player
 +       }
 ```
 
+**ファイル名： `EnemyState.cs`（追加・変更部分のみ）**
 ``` diff
 namespace TPSRoguelite.InGame.Enemy 
 {
