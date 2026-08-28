@@ -5,7 +5,7 @@
 ## 本日の目標
 1. **Git運用（.gitignore）**：：配布されたフォントなど、重いデータや権利物をGitの保存対象から外す。
 2. **タイムサバイバルと死（ゲームループ）**：制限時間のタイマーと、プレイヤーのHP（ゲームオーバー判定）を作る。
-3. **リザルト画面とMVPパターン**：：UIとロジックを綺麗に分ける「MVPアーキテクチャ」で結果発表画面を作る。
+3. **タイトルとリザルト画面（MVPパターン）**：UIとロジックを綺麗に分ける「MVPアーキテクチャ」でシーンを作る。
 
 ## 1. プロのGit運用（.gitignoreの設定）
 ゲームの見栄えを良くするために、外部サイトからダウンロードしたカッコいい「フォント（文字の形）」を使うことがあります。<br>
@@ -240,11 +240,10 @@ namespace TPSRoguelite.InGame.Player
         }
 ```
 **【エディタでの作業】**<br>
-Player オブジェクトの Hp Slider の枠に、今作ったスライダーをセットします。
+`Player` オブジェクトの `Hp Slider` の枠に、今作ったスライダーをセットします。
 
-## 3. リザルト画面とMVPパターン（アーキテクチャ）
-「ボタンを押したらタイトルに戻る」という処理を書く際、今までのように1つのスクリプトに全部書くこともできます。
-しかし今回は、プロの現場で必ず使われる MVPパターン（Model-View-Presenter） という設計方法を使って作ってみましょう！
+## 3. シーン遷移とMVPパターン（アーキテクチャ）
+「ボタンを押したらタイトルに戻る」という処理を書く際、1つのスクリプトに全部書くこともできますが、今回はプロの現場で必ず使われる **MVPパターン（Model-View-Presenter）** という設計方法を使って作ってみましょう！
 
 ### なぜMVPパターンを使うの？
 1つのスクリプトに「見た目（UI）の操作」と「ゲームのルール（データ）」を混ぜて書くと、後で「デザインを変えたい」時にルールの部分まで壊してしまう（バグが起きる）からです。<br>
@@ -253,23 +252,19 @@ MVPパターンでは、役割を**3つのスクリプト**に完全に分けま
 ・**View（ビュー / 見た目係）**：ボタンや文字などの「UI」だけをいじる。ルールのことは一切知らない。<br>
 ・**Presenter（プレゼンター / 司会者）**：Modelからデータをもらい、Viewに「こう表示して」と命令する司令塔。
 
-**💡 準備1：テキストとボタンの作成**
-1. `ResultScene` を開き、Canvasを作ります。
-2. Canvasの中に結果を表示する `TextMeshPro` を作ります。（名前を `ResultText` にします）
-3. 「タイトルへ戻る」ボタン（Button - TextMeshPro）を作ります。
-
-**💡 準備2：フォルダの作成**
+## 4.リザルト画面の作成
+**💡 準備：フォルダの作成**
 1. `Script\InGame` にフォルダを作ります。（名前を `UI` にします）
 2. `UI` フォルダの中にフォルダを作ります。（名前を `Result` にします）
 
-### 3-1. Model（データ係）の作成
+### 4-1. Model（データ係）の作成
 GameManager（前のシーンから生き残っているシングルトン）からデータを受け取るだけのシンプルなクラスを作ります。
 
 **ファイル名： `ResultModel.cs`（作成場所:`Script\InGame\UI\Result`）**
 ``` cs
-using InGame.Manager; // GameManagerにアクセスするため
+using TPSRoguelite.InGame.Manager; // GameManagerにアクセスするため
 
-namespace TPSRoguelite.Result
+namespace TPSRoguelite.UI
 {
     public class ResultModel
     {
@@ -291,7 +286,7 @@ namespace TPSRoguelite.Result
 }
 ```
 
-### 3-2. View（見た目係）の作成
+### 4-2. View（見た目係）の作成
 UIの文字を書き換えたり、ボタンが押されたことを「司会者（Presenter）」に知らせるだけのクラスを作ります。
 ルールの計算は絶対にここには書きません。
 
@@ -302,31 +297,38 @@ using UnityEngine.UI;
 using UnityEngine.Events;
 using TMPro;
 
-namespace TPSRoguelite.Result
+namespace TPSRoguelite.UI
 {
     public class ResultView : MonoBehaviour
     {
         [SerializeField] private TextMeshProUGUI resultText;
+        [SerializeField] private Button retryButton;
         [SerializeField] private Button returnTitleButton;
 
         /// <summary>
         /// ボタンが押されたときに、外部（Presenter）に知らせるためのイベント
         /// </summary>
+        public event UnityAction OnRetryClickedAction;
         public event UnityAction OnReturnTitleClickedAction;
 
-        private void Awake()
+        private void Awake ()
         {
-            // ボタンが押されたら、イベントを発火（お知らせ）する！
+            // ボタンが押されたら、イベントを発火する
             if (returnTitleButton != null)
             {
                 returnTitleButton.onClick.AddListener(() => OnReturnTitleClickedAction?.Invoke());
+            }
+
+            if (retryButton != null)
+            {
+                retryButton.onClick.AddListener(() => OnRetryClickedAction?.Invoke());
             }
         }
 
         /// <summary>
         /// Presenterから命令されて、文字を画面に表示するだけのメソッド
         /// </summary>
-        public void SetResultText(string text)
+        public void SetResultText (string text)
         {
             if (resultText != null)
             {
@@ -337,28 +339,33 @@ namespace TPSRoguelite.Result
 }
 ```
 
-### 3-3. Presenter（司会者）の作成
+### 4-3. Presenter（司会者）の作成
 データ係（Model）と見た目係（View）を繋ぎ合わせる、一番偉いクラスを作ります。
 オブジェクトにアタッチするのはこのクラス（とView）だけです。
 
 **ファイル名： `ResultPresenter.cs`（作成場所:`Script\InGame\UI\Result`）**
 ``` cs
+using TPSRoguelite.InGame.Manager;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using InGame.Manager;
 
-namespace TPSRoguelite.Result
+namespace TPSRoguelite.UI
 {
     public class ResultPresenter : MonoBehaviour
     {
+        // ※自分のシーンの名前に合わせる
+        private const string TITLE_SCENE_NAME = "TitleScene";
+        private const string IN_GAME_SCENE_NAME = "InGameScene";
+
         [SerializeField] private ResultView resultView;
-        
-        // Modelは MonoBehaviour を継承していないので、ここで new して生み出す
         private ResultModel resultModel;
 
-        private void Start()
+        private void Start ()
         {
-            if (resultView == null) return;
+            if (resultView == null)
+            {
+                return;
+            }
 
             // 1. Modelを生み出してデータを準備させる
             resultModel = new ResultModel();
@@ -381,10 +388,11 @@ namespace TPSRoguelite.Result
             resultView.SetResultText(message);
 
             // 4. Viewの「ボタンが押されたよイベント」を耳打ち（購読）して、遷移処理をセットする
+            resultView.OnRetryClickedAction += RetryGame;
             resultView.OnReturnTitleClickedAction += ReturnToTitle;
         }
 
-        private void ReturnToTitle()
+        private void RetryGame ()
         {
             // 次のプレイのために、古いGameManagerを破壊してリセットする
             if (GameManager.Instance != null)
@@ -392,15 +400,22 @@ namespace TPSRoguelite.Result
                 Destroy(GameManager.Instance.gameObject);
             }
 
-            // タイトル画面（メインシーン）へ戻る
-            SceneManager.LoadScene("MainGameScene"); // ※自分のシーンの名前に合わせる
+            // ゲームシーンを再読み込みして、最初からやり直す
+            SceneManager.LoadScene(IN_GAME_SCENE_NAME);
         }
 
-        private void OnDestroy()
+        private void ReturnToTitle()
+        {
+            // タイトル画面（メインシーン）へ戻る
+            SceneManager.LoadScene(TITLE_SCENE_NAME);
+        }
+
+        private void OnDestroy ()
         {
             // メモリのゴミを防ぐため、イベントの購読を解除しておく
             if (resultView != null)
             {
+                resultView.OnRetryClickedAction -= RetryGame;
                 resultView.OnReturnTitleClickedAction -= ReturnToTitle;
             }
         }
@@ -408,11 +423,143 @@ namespace TPSRoguelite.Result
 }
 ```
 
-**💡 エディタでの作業手順（仕上げ）**<br>
-[ ] 空のオブジェクトを作り、`ResultManager` などの名前にします。<br>
-[ ] そのオブジェクトに、**`ResultView`** と **`ResultPresenter`** の2つのスクリプトをアタッチします。<br>
-[ ] `ResultView` の枠に、TextとButtonをセットします。<br>
-[ ] `ResultPresenter` の `Result View` 枠に、自分自身（今アタッチしたResultView）をセットします。<br>
-[ ] ※今回、ボタンの `On Click ()` イベント（＋ボタン）をインスペクターで設定する必要はありません。**すべてスクリプトの力で自動的に繋がっています！**
+**💡 エディタでの作業手順（仕上げ）**
+1. `ResultScene` を開き、Canvasを作ります。
+2. Canvasの中に空のオブジェクトを作ります。（名前を `ResultUI` にします。）
+3. そのオブジェクトに、**`ResultView`** と **`ResultPresenter`** の2つのスクリプトをアタッチします。
+4. `ResultPresenter` の `Result View` 枠に、自分自身（今アタッチしたResultView）をセットします。
+5. `ResultUI` に結果を表示する `TextMeshPro` を作ります。（名前を `ResultText` にします）
+6. `ResultUI` に「リトライ」ボタンと「タイトルへ戻る」ボタン（Button - TextMeshPro）を作ります。
+7. `ResultView` の枠に、TextとButtonをセットします。
 
-ゲームをプレイして、タイムアップやHPゼロでリザルト画面に移動し、正しく結果が表示されれば、あなたのゲームの「ループ」は完全に完成です！
+※今回、ボタンの `On Click ()` イベント（＋ボタン）をインスペクターで設定する必要はありません。**すべてスクリプトの力で自動的に繋がっています！**
+
+## 5. タイトル画面の作成
+タイトル画面もリザルト画面と同じ要領で作成していきましょう。
+ `UI` フォルダの中にフォルダを作ります。（名前を `Title` にします）
+
+### 5.1 Model（データ係）の作成
+タイトル画面では現在扱うデータがありませんが、将来ハイスコアやセーブデータを読み込むための「箱」として設計のルール上作っておきます。
+**ファイル名： `TitleModel.cs`（作成場所：Scripts/InGame/UI/Title）**
+``` cs
+namespace TPSRoguelite.UI
+{
+    public class TitleModel
+    {
+        public void Initialize()
+        {
+            // セーブデータのロード処理などがここに入ります
+        }
+    }
+}
+```
+
+### 5.2 View（見た目係）の作成
+**ファイル名： `TitleView.cs`（作成場所：Scripts/InGame/UI/Title）**
+``` cs
+using UnityEngine;
+using UnityEngine.UI;
+using UnityEngine.Events;
+
+namespace TPSRoguelite.UI
+{
+    public class TitleView : MonoBehaviour
+    {
+        [SerializeField] private Button startButton;
+
+        // ボタンが押されたことを外部（Presenter）に知らせるためのイベント
+        public event UnityAction OnStartClickedAction;
+        public event UnityAction OnExitClickedAction;
+
+        private void Awake()
+        {
+            if (startButton != null)
+            {
+                startButton.onClick.AddListener(() => OnStartClickedAction?.Invoke());
+            }
+
+            if (exitButton != null)
+            {
+                exitButton.onClick.AddListener(() => OnExitClickedAction?.Invoke());
+            }
+        }
+    }
+}
+```
+
+### 5-3 Presenter（司会者）の作成
+**ファイル名： `TitlePresenter.cs`（作成場所：Scripts/InGame/UI/Title）**
+``` cs
+using TPSRoguelite.InGame.Manager;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+
+namespace TPSRoguelite.UI
+{
+    public class TitlePresenter : MonoBehaviour
+    {
+        // ※自分のメインシーンの名前に合わせる
+        private const string IN_GAME_SCENE_NAME = "InGameScene";
+        [SerializeField] private TitleView titleView;
+        private TitleModel titleModel;
+
+        private void Start ()
+        {
+            if (titleView == null)
+            {
+                return;
+            }
+
+            titleModel = new TitleModel();
+            titleModel.Initialize();
+
+            // Viewの「ボタンが押されたよイベント」を耳打ち（購読）して、遷移処理をセットする
+            titleView.OnStartClickedAction += GoToMainGame;
+            titleView.OnExitClickedAction += ExitGame;
+        }
+
+        private void GoToMainGame()
+        {
+            // 次のプレイのために、古いGameManagerを破壊してリセットする
+            if (GameManager.Instance != null)
+            {
+                Destroy(GameManager.Instance.gameObject);
+            }
+
+            SceneManager.LoadScene(IN_GAME_SCENE_NAME);
+        }
+
+        private void ExitGame()
+        {
+            // アプリケーションを終了する
+            Application.Quit();
+        }
+
+        private void OnApplicationQuit()
+        {
+            // アプリケーション終了時に、GameManagerを破壊してリセットする
+            if (GameManager.Instance != null)
+            {
+                Destroy(GameManager.Instance.gameObject);
+            }
+        }
+
+        private void OnDestroy()
+        {
+            if (titleView != null)
+            {
+                titleView.OnStartClickedAction -= GoToMainGame;
+                titleView.OnExitClickedAction -= ExitGame;
+            }
+        }
+    }
+}
+```
+**💡 エディタでの作業手順（仕上げ）**
+1. `TitleScene` を開き、Canvasを作ります。
+2. `Canvas` の中に空のGameObjectを作ります。（名前は `TitleUI` にします）
+3. `TitleUI` の中にタイトル名を表示する `TextMeshPro` を作ります。（テキスト名は `ローグライト` にします）
+4. `TitleUI` の中に「ゲーム開始」ボタンと「ゲーム終了」ボタン（Button - TextMeshPro）を作ります。
+5. `TitleUI` に `TitleView` と `TitlePresenter` をアタッチし、Viewの枠にボタンを、Presenterの枠にViewをセットしてください。
+
+**お疲れ様でした！ タイトル画面 ＞ プレイ（生か死） ＞ リザルト画面 ＞ タイトル（またはリトライ）。これであなたのゲームの「ループ」は完全に完成です！**
