@@ -5,6 +5,7 @@ using System.Linq;
 using Core.MasterData;
 using TPSRoguelite.InGame.Player;
 using System;
+using TPSRoguelite.InGame.Enum;
 
 namespace TPSRoguelite.InGame.Manager
 {
@@ -65,6 +66,9 @@ namespace TPSRoguelite.InGame.Manager
 
                 ui.nameText.text = skill.SkillName;
                 ui.dectText.text = skill.Description;
+                if ((SkillType)skill.SkillType == SkillType.TakeWeapon) {
+                    ui.dectText.SetText(skill.Description, skill.Value);
+                }
 
                 ui.button.onClick.RemoveAllListeners();
                 ui.button.onClick.AddListener(() => OnSkillSelected(skill));

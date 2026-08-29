@@ -176,17 +176,7 @@ namespace TPSRoguelite.InGame.Player {
 
         public void Setup()
         {
-            currentWeapon = MasterDataAccessor.Instance.GetById<WeaponDataRecord>(weaponId);
-
-            if (currentWeapon != null)
-            {
-                CurrentAmmo = currentWeapon.MaxAmmo;
-                UpdateWeaponUI();
-            }
-            else
-            {
-                Debug.LogError("WeaponDataがありません。");
-            }
+            TakeWeapon(weaponId);
 
             moveSpeedBuf = 0f;
             attackPowerBuf = 0f;
@@ -610,6 +600,23 @@ namespace TPSRoguelite.InGame.Player {
                     maxAmmoBuf += (int)skill.Value;
                     UpdateCurrentAmmoUI();
                     break;
+
+                case SkillType.TakeWeapon:
+                    TakeWeapon((ulong)skill.Value);
+                    break;
+            }
+        }
+
+        private void TakeWeapon(ulong id)
+        {
+            currentWeapon = MasterDataAccessor.Instance.GetById<WeaponDataRecord>(id);
+
+            if (currentWeapon != null)
+            {
+                CurrentAmmo = FinalMaxAmmo;
+                UpdateWeaponUI();
+            } else {
+                Debug.LogError("WeaponDataがありません。");
             }
         }
 
