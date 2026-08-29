@@ -5,11 +5,12 @@
 ## 本日の目標
 1. **Git運用（.gitignore）**：：配布されたフォントなど、重いデータや権利物をGitの保存対象から外す。
 2. **タイムサバイバルと死（ゲームループ）**：制限時間のタイマーと、プレイヤーのHP（ゲームオーバー判定）を作る。
-3. **タイトルとリザルト画面（MVPパターン）**：UIとロジックを綺麗に分ける「MVPアーキテクチャ」でシーンを作る。
+3. **リザルト画面（MVPパターン）**：UIとロジックを綺麗に分ける「MVPアーキテクチャ」でシーンを作る。
+4. **【課題】タイトル画面と新スキル**：学んだ設計を活かして、タイトル画面と「武器獲得スキル」を自分の力で作る。
 
 ## 1. プロのGit運用（.gitignoreの設定）
 ゲームの見栄えを良くするために、外部サイトからダウンロードしたカッコいい「フォント（文字の形）」を使うことがあります。<br>
-しかし、フォントファイルはデータ容量が非常に重く、また「他人に勝手に再配布してはいけない（著作権）」ルールがあることが多いため、そのままGit（GitHubなど）にアップロード（コミット）してしまうと大問題になることがあります。<br>
+しかし、フォントファイルは**データ容量が非常に重く**、また「他人に勝手に再配布してはいけない（著作権）」ルールがあることが多いため、そのままGit（GitHubなど）にアップロード（コミット）してしまうと大問題になることがあります。<br>
 そこで、Gitに「このフォルダの中身は無視してね」と指示を出すファイル（.gitignore）を編集します。
 
 💡 **作業手順：特定のフォルダをGitから除外する**<br>
@@ -476,132 +477,23 @@ namespace TPSRoguelite.UI
 
 ※今回、ボタンの `On Click ()` イベント（＋ボタン）をインスペクターで設定する必要はありません。**すべてスクリプトの力で自動的に繋がっています！**
 
-## 5. タイトル画面の作成
-タイトル画面もリザルト画面と同じ要領で作成していきましょう。
- `UI` フォルダの中にフォルダを作ります。（名前を `Title` にします）
-
-### 5.1 Model（データ係）の作成
-タイトル画面では現在扱うデータがありませんが、将来ハイスコアやセーブデータを読み込むための「箱」として設計のルール上作っておきます。
-**ファイル名： `TitleModel.cs`（作成場所：Scripts/InGame/UI/Title）**
-``` cs
-namespace TPSRoguelite.UI
-{
-    public class TitleModel
-    {
-        public void Initialize()
-        {
-            // セーブデータのロード処理などがここに入ります
-        }
-    }
-}
-```
-
-### 5.2 View（見た目係）の作成
-**ファイル名： `TitleView.cs`（作成場所：Scripts/InGame/UI/Title）**
-``` cs
-using UnityEngine;
-using UnityEngine.UI;
-using UnityEngine.Events;
-
-namespace TPSRoguelite.UI
-{
-    public class TitleView : MonoBehaviour
-    {
-        [SerializeField] private Button startButton;
-
-        // ボタンが押されたことを外部（Presenter）に知らせるためのイベント
-        public event UnityAction OnStartClickedAction;
-        public event UnityAction OnExitClickedAction;
-
-        private void Awake()
-        {
-            if (startButton != null)
-            {
-                startButton.onClick.AddListener(() => OnStartClickedAction?.Invoke());
-            }
-
-            if (exitButton != null)
-            {
-                exitButton.onClick.AddListener(() => OnExitClickedAction?.Invoke());
-            }
-        }
-    }
-}
-```
-
-### 5-3 Presenter（司会者）の作成
-**ファイル名： `TitlePresenter.cs`（作成場所：Scripts/InGame/UI/Title）**
-``` cs
-using TPSRoguelite.InGame.Manager;
-using UnityEngine;
-using UnityEngine.SceneManagement;
-
-namespace TPSRoguelite.UI
-{
-    public class TitlePresenter : MonoBehaviour
-    {
-        // ※自分のメインシーンの名前に合わせる
-        private const string IN_GAME_SCENE_NAME = "InGameScene";
-        [SerializeField] private TitleView titleView;
-        private TitleModel titleModel;
-
-        private void Start ()
-        {
-            if (titleView == null)
-            {
-                return;
-            }
-
-            titleModel = new TitleModel();
-            titleModel.Initialize();
-
-            // Viewの「ボタンが押されたよイベント」を耳打ち（購読）して、遷移処理をセットする
-            titleView.OnStartClickedAction += GoToMainGame;
-            titleView.OnExitClickedAction += ExitGame;
-        }
-
-        private void GoToMainGame()
-        {
-            // 次のプレイのために、古いGameManagerを破壊してリセットする
-            if (GameManager.Instance != null)
-            {
-                Destroy(GameManager.Instance.gameObject);
-            }
-
-            SceneManager.LoadScene(IN_GAME_SCENE_NAME);
-        }
-
-        private void ExitGame()
-        {
-            // アプリケーションを終了する
-            Application.Quit();
-        }
-
-        private void OnApplicationQuit()
-        {
-            // アプリケーション終了時に、GameManagerを破壊してリセットする
-            if (GameManager.Instance != null)
-            {
-                Destroy(GameManager.Instance.gameObject);
-            }
-        }
-
-        private void OnDestroy()
-        {
-            if (titleView != null)
-            {
-                titleView.OnStartClickedAction -= GoToMainGame;
-                titleView.OnExitClickedAction -= ExitGame;
-            }
-        }
-    }
-}
-```
-**💡 エディタでの作業手順（仕上げ）**
-1. `TitleScene` を開き、Canvasを作ります。
-2. `Canvas` の中に空のGameObjectを作ります。（名前は `TitleUI` にします）
-3. `TitleUI` の中にタイトル名を表示する `TextMeshPro` を作ります。（テキスト名は `ローグライト` にします）
-4. `TitleUI` の中に「ゲーム開始」ボタンと「ゲーム終了」ボタン（Button - TextMeshPro）を作ります。
-5. `TitleUI` に `TitleView` と `TitlePresenter` をアタッチし、Viewの枠にボタンを、Presenterの枠にViewをセットしてください。
-
 **お疲れ様でした！ タイトル画面 ＞ プレイ（生か死） ＞ リザルト画面 ＞ タイトル（またはリトライ）。これであなたのゲームの「ループ」は完全に完成です！**
+
+先ほどお手本として作った「リザルト画面（Result）」の設計を真似して、**「タイトル画面（Title）」をMVPパターンで実装**してください。
+
+*   **ヒント①（Model）**：タイトル画面では扱うデータがないため、`TitleModel.cs` の中身は空っぽ（Initializeメソッドだけある状態）で構いません。
+*   **ヒント②（View）**：画面には「Game Start」ボタンを1つ置きます。`TitleView.cs` はそのボタンが押されたイベント（Action）を公開します。
+*   **ヒント③（Presenter）**：`TitlePresenter.cs` でViewのイベントを購読し、`SceneManager.LoadScene("MainGameScene")` を実行します。
+
+### 課題2：新しいスキル「武器獲得」を作ろう
+前回のスキルは「ステータスアップ」だけでしたが、今度は**「今持っている武器を、別の強力な武器に持ち替える（上書きする）」**スキルを実装してみましょう！
+
+*   **ヒント①（CSVの準備）**：
+    *   まず、スプレッドシートの武器データ（WeaponData.csv）に、ID「2」の新しい武器（マシンガンなど）を作ります。
+    *   次に、スキルデータ（SkillData.csv）に新しいスキルを作ります。`SkillType` は新しい数字（例：5）にし、`Value` には**「獲得させたい武器のID（今回は 2）」**を入力します。
+*   **ヒント②（ApplySkillの改修）**：
+    *   `PlayerController.cs` の `ApplySkill` メソッドの `switch` 文に、新しいスキルの条件（例：`case SkillType.WeaponChange:`）を追加します。
+    *   `MasterDataAccessor.Instance.GetById<WeaponDataRecord>( (int)skill.Value )` を使って、CSVから新しい武器のデータを引っ張ってきます。
+    *   引っ張ってきたデータを `currentWeapon` に代入（上書き）します。
+*   **ヒント③（落とし穴に注意！）**：
+    *   武器を持ち替えただけでは、弾数（`CurrentAmmo`）が古い武器のままです。弾数をMAXまで補充し、UIの文字（`UpdateWeaponUI()`）を呼び直すのを忘れないようにしましょう！
