@@ -57,8 +57,6 @@ namespace TPSRoguelite.InGame.Manager
 
             var allSkills = MasterDataAccessor.Instance.GetAll<SkillDataRecord>();
             var chosenSkills = allSkills.OrderBy(v => System.Guid.NewGuid()).Take(3).ToList();
-            // Random.Shared.Next()
-
             for (int i = 0; i < 3; i++)
             {
                 var skill = chosenSkills[i];
@@ -66,8 +64,11 @@ namespace TPSRoguelite.InGame.Manager
 
                 ui.nameText.text = skill.SkillName;
                 ui.dectText.text = skill.Description;
-                if ((SkillType)skill.SkillType == SkillType.TakeWeapon) {
-                    ui.dectText.SetText(skill.Description, skill.Value);
+                if ((SkillType)skill.SkillType == SkillType.TakeWeapon)
+                {
+                    string weaponName = MasterDataAccessor.Instance.GetById<WeaponDataRecord>((ulong)skill.Value)?.WeaponName;
+                    string descText = string.Format(skill.Description, weaponName);
+                    ui.dectText.SetText(descText, skill.Value);
                 }
 
                 ui.button.onClick.RemoveAllListeners();

@@ -33,7 +33,7 @@ MonoBehaviour:
     <WeaponName>k__BackingField: "\u30D8\u30E0\u30ED\u30C3\u30AF"
     <WeaponFireType>k__BackingField: 1
     <AttackPower>k__BackingField: 20
-    <FireInteval>k__BackingField: 1
+    <FireInteval>k__BackingField: 0.2
     <FireRate>k__BackingField: 1
     <MaxAmmo>k__BackingField: 20
     <ReloadTime>k__BackingField: 3
@@ -41,7 +41,7 @@ MonoBehaviour:
     <WeaponName>k__BackingField: AK
     <WeaponFireType>k__BackingField: 2
     <AttackPower>k__BackingField: 10
-    <FireInteval>k__BackingField: 1
-    <FireRate>k__BackingField: 1
+    <FireInteval>k__BackingField: 0.1
+    <FireRate>k__BackingField: 0.1
     <MaxAmmo>k__BackingField: 30
     <ReloadTime>k__BackingField: 3
