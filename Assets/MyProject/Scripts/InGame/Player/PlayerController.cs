@@ -5,6 +5,7 @@ using UnityEngine.InputSystem;
 using Cysharp.Threading.Tasks;
 using System;
 using System.Threading;
+using Core.Mananger;
 using TPSRoguelite.InGame.Enum;
 using Core.MasterData;
 using TMPro;
@@ -86,6 +87,7 @@ namespace TPSRoguelite.InGame.Player {
         [SerializeField] private TextMeshProUGUI levelUpText;
         [SerializeField] private ParticleSystem levelUpEffect;
         [SerializeField] private Slider hpBar;
+        [SerializeField] private AudioClip shootSe;
 
         /// <summary>
         /// 武器のデータ
@@ -400,6 +402,11 @@ namespace TPSRoguelite.InGame.Player {
             if (muzzleFlash != null)
             {
                 muzzleFlash.Play();
+            }
+            
+            if (SoundManager.Instance != null)
+            {
+                SoundManager.Instance.PlaySe(shootSe);
             }
 
             Ray ray = new Ray(mainCameraTransform.position, mainCameraTransform.forward);

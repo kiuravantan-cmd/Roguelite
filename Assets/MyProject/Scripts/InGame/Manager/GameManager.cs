@@ -1,3 +1,4 @@
+using Core.Mananger;
 using TPSRoguelite.InGame.Player;
 using TPSRoguelite.InGame.Spawner;
 using UnityEngine;
@@ -18,6 +19,7 @@ namespace TPSRoguelite.InGame.Manager
         [SerializeField] private EnemySpawner enemySpawner = null;
         [SerializeField] private TextMeshProUGUI timerText = null;
         [SerializeField] private float gameClearTime = 180f;
+        [SerializeField] private AudioClip bgmClip = null;
 
         private float currentTime = 0f;
         private bool isGameActive = false;
@@ -46,10 +48,10 @@ namespace TPSRoguelite.InGame.Manager
 
         private async UniTaskVoid Setup()
         {
-            // ƒ}ƒXƒ^[ƒf[ƒ^‚Ì“Ç‚İ‚İ
+            // ï¿½}ï¿½Xï¿½^ï¿½[ï¿½fï¿½[ï¿½^ï¿½Ì“Ç‚İï¿½ï¿½ï¿½
             await MasterDataAccessor.Instance.InitializeAsync();
 
-            // “Ç‚İ‚İ‚ªŠ®—¹‚µ‚½‚çAƒvƒŒƒCƒ„[‚ÆƒXƒ|ƒi[‚Ì€”õ‚ğn‚ß‚é
+            // ï¿½Ç‚İï¿½ï¿½İ‚ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Aï¿½vï¿½ï¿½ï¿½Cï¿½ï¿½ï¿½[ï¿½ÆƒXï¿½|ï¿½iï¿½[ï¿½Ìï¿½ï¿½ï¿½ï¿½ï¿½ï¿½nï¿½ß‚ï¿½
             if (player != null)
             {
                 player.Setup();
@@ -58,6 +60,11 @@ namespace TPSRoguelite.InGame.Manager
             if (enemySpawner != null)
             {
                 enemySpawner.Setup();
+            }
+
+            if (SoundManager.Instance != null)
+            {
+                SoundManager.Instance.PlayBgm(bgmClip);
             }
 
             IsGameClear = false;
@@ -99,7 +106,7 @@ namespace TPSRoguelite.InGame.Manager
             IsGameClear = true;
             FinalLevel = player != null ? player.CurrentLevel : 1;
 
-            Debug.Log("ƒQ[ƒ€ƒNƒŠƒAI");
+            Debug.Log("ï¿½Qï¿½[ï¿½ï¿½ï¿½Nï¿½ï¿½ï¿½Aï¿½I");
             GoToResultScene();
         }
 
@@ -109,7 +116,7 @@ namespace TPSRoguelite.InGame.Manager
             IsGameClear = false;
             FinalLevel = player != null ? player.CurrentLevel : 1;
 
-            Debug.Log("ƒQ[ƒ€ƒI[ƒo[...");
+            Debug.Log("ï¿½Qï¿½[ï¿½ï¿½ï¿½Iï¿½[ï¿½oï¿½[...");
             GoToResultScene();
         }
 
