@@ -38,6 +38,16 @@ namespace Core.Manager
             }
         }
 
+        public void PlaySe(AudioClip clip)
+        {
+            if (clip != null) 
+            {
+                seSource.clip = clip;
+                seSource.volume = masterVolume * seVolume;
+                seSource.Play();
+            }
+        }
+
         public void UpdateVolumes()
         {
             bgmSource.volume = masterVolume * bgmVolume;
